@@ -1,5 +1,3 @@
-include "cairo_header.nim"
-
 type
   Context* = object
     impl: PContext
@@ -73,6 +71,8 @@ proc `=destroy`(pattern: var Pattern) =
 proc `=sink`(pattern: var Pattern; original: Pattern) =
   `=destroy`(pattern)
   pattern.impl = original.impl
+
+proc checkStatus*(s: Status)
 
 proc version*(): int32 =
   cairo_version()
@@ -508,3 +508,23 @@ proc debugResetStaticData*() =
 # new since 1.10
 proc surfaceCreateForRectangle*(target: Surface, x,y,w,h: float64): Surface =
   cairo_surface_create_for_rectangle(target.impl, x, y, w, h)
+
+proc version*(major, minor, micro: var int32) =
+  var version: int32
+  version = version()
+  major = version div 10000'i32
+  minor = (version mod (major * 10000'i32)) div 100'i32
+  micro = (version mod ((major * 10000'i32) + (minor * 100'i32)))
+
+proc checkStatus*(s: Status) {.noinline.} =
+  ## if ``s != StatusSuccess`` the error is turned into an appropirate Nim
+  ## exception and raised.
+  case s
+  of StatusSuccess: discard
+  of StatusNoMemory:
+    raise newException(OutOfMemError, statusToString(s))
+  of StatusReadError, StatusWriteError, StatusFileNotFound,
+     StatusTempFileError:
+    raise newException(IOError, statusToString(s))
+  else:
+    raise newException(AssertionError, statusToString(s))

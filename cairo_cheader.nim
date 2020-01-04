@@ -1,4 +1,17 @@
-include "cairo_pragma.nim"
+when declared(use_pkg_config) or declared(use_pkg_config_static):
+  {.pragma: libcairo, cdecl.}
+  when defined(use_pkg_config_static):
+    {.passl: gorge("pkg-config cairo --libs --static").}
+  else:
+    {.passl: gorge("pkg-config cairo --libs").}
+else:
+  when defined(windows):
+    const LibCairo* = "libcairo-2.dll"
+  elif defined(macosx):
+    const LibCairo* = "libcairo(|.2).dylib"
+  else:
+    const LibCairo* = "libcairo.so(|.2)"
+  {.pragma: libcairo, cdecl, dynlib: LibCairo.}
 
 type
   Status* = enum
@@ -113,13 +126,13 @@ type
   DestroyFunc* = proc (data: pointer) {.cdecl.}
   WriteFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
   ReadFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
-  TContext*{.final.} = object
-  TSurface*{.final.} = object
-  TPattern*{.final.} = object
-  TScaledFont*{.final.} = object
-  TFontFace*{.final.} = object
-  TFontOptions*{.final.} = object
-  Matrix*{.byref.} = object
+  TContext* = object
+  TSurface* = object
+  TPattern* = object
+  TScaledFont* = object
+  TFontFace* = object
+  TFontOptions* = object
+  Matrix* {.byref.} = object
     xx*: float64
     yx*: float64
     xy*: float64
@@ -127,15 +140,15 @@ type
     x0*: float64
     y0*: float64
 
-  TUserDataKey*{.final.} = object
+  UserDataKey* {.byref.} = object
     unused*: int32
 
-  TGlyph*{.final.} = object
+  Glyph* {.byref.} = object
     index*: int32
     x*: float64
     y*: float64
 
-  TTextExtents*{.final.} = object
+  TextExtents* {.byref.} = object
     xBearing* {.importc: "x_bearing".}: float64
     yBearing* {.importc: "y_bearing".}: float64
     width*: float64
@@ -143,26 +156,26 @@ type
     xAdvance* {.importc: "x_advance".}: float64
     yAdvance* {.importc: "y_advance".}: float64
 
-  TFontExtents*{.final.} = object
+  FontExtents* {.byref.} = object
     ascent*: float64
     descent*: float64
     height*: float64
     maxXAdvance* {.importc: "max_x_advance".}: float64
-    maxYAadvance* {.importc: "max_y_advance".}: float64
+    maxYAdvance* {.importc: "max_y_advance".}: float64
 
-  PathData*{.byref.} = object
+  PathData* {.byref.} = object
     x*: float64
     y*: float64
 
-  TPath*{.final.} = object
+  TPath* = object
     status*: Status
     data*: ptr UncheckedArray[PathData]
     numData* {.importc: "num_data".}: int32
 
-  Rectangle*{.byref.} = object
+  Rectangle* {.byref.} = object
     x*, y*, width*, height*: float64
 
-  TRectangleList*{.final.} = object
+  TRectangleList* = object
     status*: Status
     rectangles*: ptr UncheckedArray[Rectangle]
     numRectangles* {.importc: "num_rectangles".}: int32
@@ -431,23 +444,3 @@ proc cairo_debug_reset_static_data()
 # new since 1.10
 proc cairo_surface_create_for_rectangle(target: PSurface, x,y,w,h: float64): PSurface
 {.pop.}
-
-proc version*(major, minor, micro: var int32) =
-  var version: int32
-  version = version()
-  major = version div 10000'i32
-  minor = (version mod (major * 10000'i32)) div 100'i32
-  micro = (version mod ((major * 10000'i32) + (minor * 100'i32)))
-
-proc checkStatus*(s: Status) {.noinline.} =
-  ## if ``s != StatusSuccess`` the error is turned into an appropirate Nim
-  ## exception and raised.
-  case s
-  of StatusSuccess: discard
-  of StatusNoMemory:
-    raise newException(OutOfMemError, $statusToString(s))
-  of StatusReadError, StatusWriteError, StatusFileNotFound,
-     StatusTempFileError:
-    raise newException(IOError, $statusToString(s))
-  else:
-    raise newException(AssertionError, $statusToString(s))
