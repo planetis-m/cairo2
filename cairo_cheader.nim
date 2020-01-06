@@ -107,15 +107,15 @@ type
     x0*: float64
     y0*: float64
 
-  UserDataKey* {.byref.} = object
+  TUserDataKey* {.byref.} = object
     unused*: int32
 
-  Glyph* {.byref.} = object
+  TGlyph* {.byref.} = object
     index*: int32
     x*: float64
     y*: float64
 
-  TextExtents* {.byref.} = object
+  TTextExtents* {.byref.} = object
     xBearing* {.importc: "x_bearing".}: float64
     yBearing* {.importc: "y_bearing".}: float64
     width*: float64
@@ -123,28 +123,28 @@ type
     xAdvance* {.importc: "x_advance".}: float64
     yAdvance* {.importc: "y_advance".}: float64
 
-  FontExtents* {.byref.} = object
+  TFontExtents* {.byref.} = object
     ascent*: float64
     descent*: float64
     height*: float64
     maxXAdvance* {.importc: "max_x_advance".}: float64
     maxYAdvance* {.importc: "max_y_advance".}: float64
 
-  PathData* {.byref.} = object
+  TPathData* {.byref.} = object
     x*: float64
     y*: float64
 
   TPath* = object
     status*: Status
-    data*: ptr UncheckedArray[PathData]
+    data*: ptr UncheckedArray[TPathData]
     numData* {.importc: "num_data".}: int32
 
-  Rectangle* {.byref.} = object
+  TRectangle* {.byref.} = object
     x*, y*, width*, height*: float64
 
   TRectangleList* = object
     status*: Status
-    rectangles*: ptr UncheckedArray[Rectangle]
+    rectangles*: ptr UncheckedArray[TRectangle]
     numRectangles* {.importc: "num_rectangles".}: int32
 
   PContext* = ptr TContext
@@ -153,6 +153,7 @@ type
   PScaledFont* = ptr TScaledFont
   PFontFace* = ptr TFontFace
   PFontOptions* = ptr TFontOptions
+  PMatrix* = ptr Matrix
   PUserDataKey* = ptr TUserDataKey
   PGlyph* = ptr TGlyph
   PTextExtents* = ptr TTextExtents
