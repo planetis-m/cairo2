@@ -19,7 +19,8 @@ macro mkCairoError(body: untyped): untyped =
     result.add getAst(declSubty(newIdentNode("Cairo" & enumVals[i].strVal), errBasety))
   result.add statusTy
 
-proc statusToString*(status: Status): string
+template statusToString(status: Status): string =
+  $cairo_status_to_string(status)
 
 macro checkStatus(expr, raises: untyped): untyped =
   result = newStmtList()
@@ -32,8 +33,8 @@ macro checkStatus(expr, raises: untyped): untyped =
     result[1].add nnkOfBranch.newTree(newIdentNode("Status" & n.strVal), nnkRaiseStmt.newTree(
       newCall(bindSym"newException", newIdentNode("Cairo" & n.strVal),
       newCall(bindSym"statusToString", statusVal))))
-  result[1].add nnkElse.newTree(
-    newCall(bindSym"assert", newLit(false)))
+  result[1].add nnkElse.newTree(newCall(bindSym"assert", newLit(false),
+    newCall(bindSym"statusToString", statusVal)))
 
 mkCairoError:
   type Status = enum
@@ -296,8 +297,6 @@ proc copyClipRectangleList*(cr: Context): RectangleList =
 # Font/Text functions
 proc fontOptionsCreate*(): FontOptions =
   cairo_font_options_create()
-proc status*(options: FontOptions): Status =
-  cairo_font_options_status(options)
 proc merge*(options, other: FontOptions) =
   cairo_font_options_merge(options, other)
 proc equal*(options, other: FontOptions): bool =
@@ -357,8 +356,6 @@ proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int32, extents: TextEx
 proc fontExtents*(cr: Context, extents: FontExtents) =
   cairo_font_extents(cr.impl, extents)
 # Generic identifier for a font style
-proc status*(fontFace: FontFace): Status =
-  cairo_font_face_status(fontFace.impl)
 proc getType*(fontFace: FontFace): FontType =
   cairo_font_face_get_type(fontFace.impl)
 proc getUserData*(fontFace: FontFace, key: UserDataKey): pointer =
@@ -368,8 +365,6 @@ proc setUserData*(fontFace: FontFace, key: UserDataKey, userData: pointer, destr
 # Portable interface to general font features
 proc scaledFontCreate*(fontFace: FontFace, fontMatrix: Matrix, ctm: Matrix, options: FontOptions): ScaledFont =
   cairo_scaled_font_create(fontFace.impl, fontMatrix, ctm, options)
-proc status*(scaledFont: ScaledFont): Status =
-  cairo_scaled_font_status(scaledFont.impl)
 proc getType*(scaledFont: ScaledFont): FontType =
   cairo_scaled_font_get_type(scaledFont.impl)
 proc getUserData*(scaledFont: ScaledFont, key: UserDataKey): pointer =
@@ -427,16 +422,9 @@ proc copyPathFlat*(cr: Context): Path =
   cairo_copy_path_flat(cr.impl)
 proc appendPath*(cr: Context, path: Path) =
   cairo_append_path(cr.impl, path)
-# Error status queries
-proc status*(cr: Context): Status =
-  cairo_status(cr.impl)
-proc statusToString*(status: Status): string =
-  $cairo_status_to_string(status)
 # Surface manipulation
 proc surfaceCreateSimilar*(other: Surface, content: Content, width, height: int32): Surface =
   cairo_surface_create_similar(other, content, width, height)
-proc status*(surface: Surface): Status =
-  cairo_surface_status(surface.impl)
 proc getType*(surface: Surface): SurfaceType =
   cairo_surface_get_type(surface.impl)
 proc getContent*(surface: Surface): Content =
@@ -493,8 +481,6 @@ proc patternCreateLinear*(x0, y0, x1, y1: float64): Pattern =
   cairo_pattern_create_linear(x0, y0, x1, y1)
 proc patternCreateRadial*(cx0, cy0, radius0, cx1, cy1, radius1: float64): Pattern =
   cairo_pattern_create_radial(cx0, cy0, radius0, cx1, cy1, radius1)
-proc status*(pattern: Pattern): Status =
-  cairo_pattern_status(pattern.impl)
 proc getUserData*(pattern: Pattern, key: UserDataKey): pointer =
   cairo_pattern_get_user_data(pattern.impl, key)
 proc setUserData*(pattern: Pattern, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
