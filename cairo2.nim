@@ -1,6 +1,6 @@
 import macros
 
-macro mkCairoError(body: untyped): untyped =
+macro toCairoError(body: untyped): untyped =
   template declSubty(a, b) =
     type a* = object of b
   template declEnum(name, none) =
@@ -19,7 +19,7 @@ macro mkCairoError(body: untyped): untyped =
     result.add getAst(declSubty(newIdentNode("Cairo" & enumVals[i].strVal), errBasety))
   result.add statusTy
 
-mkCairoError:
+toCairoError:
   type Status = enum
     Success,
     NoMemory,

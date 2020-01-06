@@ -377,18 +377,18 @@ proc cairo_pattern_get_color_stop_count(pattern: PPattern, count: var int32): St
 proc cairo_pattern_get_linear_points(pattern: PPattern, x0, y0, x1, y1: var float64): Status
 proc cairo_pattern_get_radial_circles(pattern: PPattern, x0, y0, r0, x1, y1, r1: var float64): Status
 # Matrix functions
-proc cairo_matrix_init(matrix: PMatrix, xx, yx, xy, yy, x0, y0: float64)
-proc cairo_matrix_init_identity(matrix: PMatrix)
-proc cairo_matrix_init_translate(matrix: PMatrix, tx, ty: float64)
-proc cairo_matrix_init_scale(matrix: PMatrix, sx, sy: float64)
-proc cairo_matrix_init_rotate(matrix: PMatrix, radians: float64)
-proc cairo_matrix_translate(matrix: PMatrix, tx, ty: float64)
-proc cairo_matrix_scale(matrix: PMatrix, sx, sy: float64)
-proc cairo_matrix_rotate(matrix: PMatrix, radians: float64)
-proc cairo_matrix_invert(matrix: PMatrix): Status
-proc cairo_matrix_multiply(result, a, b: PMatrix)
-proc cairo_matrix_transform_distance(matrix: PMatrix, dx, dy: var float64)
-proc cairo_matrix_transform_point(matrix: PMatrix, x, y: var float64)
+proc cairo_matrix_init(matrix: var Matrix, xx, yx, xy, yy, x0, y0: float64)
+proc cairo_matrix_init_identity(matrix: var Matrix)
+proc cairo_matrix_init_translate(matrix: var Matrix, tx, ty: float64)
+proc cairo_matrix_init_scale(matrix: var Matrix, sx, sy: float64)
+proc cairo_matrix_init_rotate(matrix: var Matrix, radians: float64)
+proc cairo_matrix_translate(matrix: var Matrix, tx, ty: float64)
+proc cairo_matrix_scale(matrix: var Matrix, sx, sy: float64)
+proc cairo_matrix_rotate(matrix: var Matrix, radians: float64)
+proc cairo_matrix_invert(matrix: var Matrix): Status
+proc cairo_matrix_multiply(result: var Matrix, a, b: Matrix)
+proc cairo_matrix_transform_distance(matrix: Matrix, dx, dy: var float64)
+proc cairo_matrix_transform_point(matrix: Matrix, x, y: var float64)
 # PDF functions
 proc cairo_pdf_surface_create(filename: cstring, width_in_points, height_in_points: float64): PSurface
 proc cairo_pdf_surface_create_for_stream(write_func: WriteFunc, closure: pointer, width_in_points, height_in_points: float64): PSurface
