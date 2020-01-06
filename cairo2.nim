@@ -184,7 +184,7 @@ proc popGroupToSource*(cr: Context) =
 proc setOperator*(cr: Context, op: Operator) =
   cairo_set_operator(cr.impl, op)
 proc setSource*(cr: Context, source: Pattern) =
-  cairo_set_source(cr.impl, source)
+  cairo_set_source(cr.impl, source.impl)
 proc setSourceRgb*(cr: Context, red, green, blue: float64) =
   cairo_set_source_rgb(cr.impl, red, green, blue)
 proc setSourceRgba*(cr: Context, red, green, blue, alpha: float64) =
@@ -204,7 +204,7 @@ proc setLineCap*(cr: Context, lineCap: LineCap) =
 proc setLineJoin*(cr: Context, lineJoin: LineJoin) =
   cairo_set_line_join(cr.impl, lineJoin)
 proc setDash*(cr: Context, dashes: openarray[float64], offset: float64) =
-  cairo_set_dash(cr: Context, dashes: openarray[float64], offset: float64)
+  cairo_set_dash(cr.impl, dashes, offset)
 proc setMiterLimit*(cr: Context, limit: float64) =
   cairo_set_miter_limit(cr.impl, limit)
 proc translate*(cr: Context, tx, ty: float64) =
@@ -237,7 +237,7 @@ proc newSubPath*(cr: Context) =
 proc lineTo*(cr: Context, x, y: float64) =
   cairo_line_to(cr.impl, x, y)
 proc curveTo*(cr: Context, x1, y1, x2, y2, x3, y3: float64) =
-  cairo_curve_to(cr: Context, x1, y1, x2, y2, x3, y3: float64)
+  cairo_curve_to(cr.impl, x1, y1, x2, y2, x3, y3)
 proc arc*(cr: Context, xc, yc, radius, angle1, angle2: float64) =
   cairo_arc(cr.impl, xc, yc, radius, angle1, angle2)
 proc arcNegative*(cr: Context, xc, yc, radius, angle1, angle2: float64) =
@@ -247,7 +247,7 @@ proc relMoveTo*(cr: Context, dx, dy: float64) =
 proc relLineTo*(cr: Context, dx, dy: float64) =
   cairo_rel_line_to(cr.impl, dx, dy)
 proc relCurveTo*(cr: Context, dx1, dy1, dx2, dy2, dx3, dy3: float64) =
-  cairo_rel_curve_to(cr: Context, dx1, dy1, dx2, dy2, dx3, dy3: float64)
+  cairo_rel_curve_to(cr.impl, dx1, dy1, dx2, dy2, dx3, dy3)
 proc rectangle*(cr: Context, x, y, width, height: float64) =
   cairo_rectangle(cr.impl, x, y, width, height)
 proc closePath*(cr: Context) =
@@ -298,27 +298,27 @@ proc copyClipRectangleList*(cr: Context): RectangleList =
 proc fontOptionsCreate*(): FontOptions =
   result = FontOptions(impl: cairo_font_options_create())
 proc merge*(options, other: FontOptions) =
-  cairo_font_options_merge(options, other)
+  cairo_font_options_merge(options.impl, other.impl)
 proc equal*(options, other: FontOptions): bool =
-  cairo_font_options_equal(options, other) == 1'i32
+  cairo_font_options_equal(options.impl, other.impl) == 1'i32
 proc hash*(options: FontOptions): int32 =
-  cairo_font_options_hash(options)
+  cairo_font_options_hash(options.impl)
 proc setAntialias*(options: FontOptions, antialias: Antialias) =
-  cairo_font_options_set_antialias(options, antialias)
+  cairo_font_options_set_antialias(options.impl, antialias)
 proc getAntialias*(options: FontOptions): Antialias =
-  cairo_font_options_get_antialias(options)
+  cairo_font_options_get_antialias(options.impl)
 proc setSubpixelOrder*(options: FontOptions, subpixelOrder: SubpixelOrder) =
-  cairo_font_options_set_subpixel_order(options, subpixelOrder)
+  cairo_font_options_set_subpixel_order(options.impl, subpixelOrder)
 proc getSubpixelOrder*(options: FontOptions): SubpixelOrder =
-  cairo_font_options_get_subpixel_order(options)
+  cairo_font_options_get_subpixel_order(options.impl)
 proc setHintStyle*(options: FontOptions, hintStyle: HintStyle) =
-  cairo_font_options_set_hint_style(options, hintStyle)
+  cairo_font_options_set_hint_style(options.impl, hintStyle)
 proc getHintStyle*(options: FontOptions): HintStyle =
-  cairo_font_options_get_hint_style(options)
+  cairo_font_options_get_hint_style(options.impl)
 proc setHintMetrics*(options: FontOptions, hintMetrics: HintMetrics) =
-  cairo_font_options_set_hint_metrics(options, hintMetrics)
+  cairo_font_options_set_hint_metrics(options.impl, hintMetrics)
 proc getHintMetrics*(options: FontOptions): HintMetrics =
-  cairo_font_options_get_hint_metrics(options)
+  cairo_font_options_get_hint_metrics(options.impl)
 # This interface is for dealing with text as text, not caring about the
   #   font object inside the the TCairo.
 proc selectFontFace*(cr: Context, family: string, slant: FontSlant, weight: FontWeight) =
@@ -330,9 +330,10 @@ proc setFontMatrix*(cr: Context, matrix: Matrix) =
 proc getFontMatrix*(cr: Context, matrix: Matrix) =
   cairo_get_font_matrix(cr.impl, matrix)
 proc setFontOptions*(cr: Context, options: FontOptions) =
-  cairo_set_font_options(cr.impl, options)
-proc getFontOptions*(cr: Context, options: FontOptions) =
-  cairo_get_font_options(cr.impl, options)
+  cairo_set_font_options(cr.impl, options.impl)
+proc getFontOptions*(cr: Context): FontOptions =
+  result = fontOptionsCreate()
+  cairo_get_font_options(cr.impl, result.impl)
 proc setFontFace*(cr: Context, fontFace: FontFace) =
   cairo_set_font_face(cr.impl, fontFace.impl)
 proc getFontFace*(cr: Context): FontFace =
@@ -364,7 +365,7 @@ proc setUserData*(fontFace: FontFace, key: UserDataKey, userData: pointer, destr
   checkStatus cairo_font_face_set_user_data(fontFace.impl, key, userData, destroy), [NoMemory]
 # Portable interface to general font features
 proc scaledFontCreate*(fontFace: FontFace, fontMatrix: Matrix, ctm: Matrix, options: FontOptions): ScaledFont =
-  result = ScaledFont(impl: cairo_scaled_font_create(fontFace.impl, fontMatrix, ctm, options))
+  result = ScaledFont(impl: cairo_scaled_font_create(fontFace.impl, fontMatrix, ctm, options.impl))
 proc getType*(scaledFont: ScaledFont): FontType =
   cairo_scaled_font_get_type(scaledFont.impl)
 proc getUserData*(scaledFont: ScaledFont, key: UserDataKey): pointer =
@@ -379,12 +380,13 @@ proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int32, exte
   cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs, extents)
 proc getFontFace*(scaledFont: ScaledFont): FontFace =
   result = FontFace(impl: cairo_scaled_font_get_font_face(scaledFont.impl))
-proc getFontMatrix*(scaledFont: ScaledFont, fontMatrix: Matrix) =
-  cairo_scaled_font_get_font_matrix(scaledFont.impl, fontMatrix)
-proc getCtm*(scaledFont: ScaledFont, ctm: Matrix) =
-  cairo_scaled_font_get_ctm(scaledFont.impl, ctm)
-proc getFontOptions*(scaledFont: ScaledFont, options: FontOptions) =
-  cairo_scaled_font_get_font_options(scaledFont.impl, options)
+proc getFontMatrix*(scaledFont: ScaledFont): Matrix =
+  cairo_scaled_font_get_font_matrix(scaledFont.impl, result)
+proc getCtm*(scaledFont: ScaledFont): Matrix =
+  cairo_scaled_font_get_ctm(scaledFont.impl, result)
+proc getFontOptions*(scaledFont: ScaledFont): FontOptions =
+  result = fontOptionsCreate()
+  cairo_scaled_font_get_font_options(scaledFont.impl, result.impl)
 # Query functions
 proc getOperator*(cr: Context): Operator =
   cairo_get_operator(cr.impl)
@@ -410,8 +412,8 @@ proc getDashCount*(cr: Context): int32 =
   cairo_get_dash_count(cr.impl)
 proc getDash*(cr: Context, dashes, offset: var float64) =
   cairo_get_dash(cr.impl, dashes, offset)
-proc getMatrix*(cr: Context, matrix: Matrix) =
-  cairo_get_matrix(cr.impl, matrix)
+proc getMatrix*(cr: Context): Matrix =
+  cairo_get_matrix(cr.impl, result)
 proc getTarget*(cr: Context): Surface =
   result = Surface(impl: cairo_get_target(cr.impl))
 proc getGroupTarget*(cr: Context): Surface =
@@ -437,8 +439,9 @@ proc getUserData*(surface: Surface, key: UserDataKey): pointer =
   cairo_surface_get_user_data(surface.impl, key)
 proc setUserData*(surface: Surface, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
   checkStatus cairo_surface_set_user_data(surface.impl, key, userData, destroy), [NoMemory]
-proc getFontOptions*(surface: Surface, options: FontOptions) =
-  cairo_surface_get_font_options(surface.impl, options)
+proc getFontOptions*(surface: Surface): FontOptions =
+  result = fontOptionsCreate()
+  cairo_surface_get_font_options(surface.impl, result.impl)
 proc flush*(surface: Surface) =
   cairo_surface_flush(surface.impl)
 proc markDirty*(surface: Surface) =
@@ -493,8 +496,8 @@ proc addColorStopRgba*(pattern: Pattern, offset, red, green, blue, alpha: float6
   cairo_pattern_add_color_stop_rgba(pattern.impl, offset, red, green, blue, alpha)
 proc setMatrix*(pattern: Pattern, matrix: Matrix) =
   cairo_pattern_set_matrix(pattern.impl, matrix)
-proc getMatrix*(pattern: Pattern, matrix: Matrix) =
-  cairo_pattern_get_matrix(pattern.impl, matrix)
+proc getMatrix*(pattern: Pattern): Matrix =
+  cairo_pattern_get_matrix(pattern.impl, result)
 proc setExtend*(pattern: Pattern, extend: Extend) =
   cairo_pattern_set_extend(pattern.impl, extend)
 proc getExtend*(pattern: Pattern): Extend =
@@ -533,7 +536,7 @@ proc scale*(matrix: var Matrix, sx, sy: float64) =
 proc rotate*(matrix: var Matrix, radians: float64) =
   cairo_matrix_rotate(matrix, radians)
 proc invert*(matrix: var Matrix) =
-  checkStatus cairo_matrix_invert(matrix)
+  checkStatus cairo_matrix_invert(matrix), [InvalidMatrix]
 proc multiply*(a, b: Matrix): Matrix =
   cairo_matrix_multiply(result, a, b)
 proc transformDistance*(matrix: Matrix, dx, dy: var float64) =

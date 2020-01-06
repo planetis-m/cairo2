@@ -93,12 +93,12 @@ type
   DestroyFunc* = proc (data: pointer) {.cdecl.}
   WriteFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
   ReadFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
-  TContext* = object
-  TSurface* = object
-  TPattern* = object
-  TScaledFont* = object
-  TFontFace* = object
-  TFontOptions* = object
+  TContext = object
+  TSurface = object
+  TPattern = object
+  TScaledFont = object
+  TFontFace = object
+  TFontOptions = object
   Matrix* {.byref.} = object
     xx*: float64
     yx*: float64
@@ -107,7 +107,7 @@ type
     x0*: float64
     y0*: float64
 
-  TUserDataKey* {.byref.} = object
+  UserDataKey* {.byref.} = object
     unused*: int32
 
   TGlyph* {.byref.} = object
@@ -139,22 +139,22 @@ type
     data*: ptr UncheckedArray[TPathData]
     numData* {.importc: "num_data".}: int32
 
-  TRectangle* {.byref.} = object
+  Rectangle* {.byref.} = object
     x*, y*, width*, height*: float64
 
   TRectangleList* = object
     status*: Status
-    rectangles*: ptr UncheckedArray[TRectangle]
+    rectangles*: ptr UncheckedArray[Rectangle]
     numRectangles* {.importc: "num_rectangles".}: int32
 
-  PContext* = ptr TContext
-  PSurface* = ptr TSurface
-  PPattern* = ptr TPattern
-  PScaledFont* = ptr TScaledFont
-  PFontFace* = ptr TFontFace
-  PFontOptions* = ptr TFontOptions
-  PMatrix* = ptr Matrix
-  PUserDataKey* = ptr TUserDataKey
+  PContext = ptr TContext
+  PSurface = ptr TSurface
+  PPattern = ptr TPattern
+  PScaledFont = ptr TScaledFont
+  PFontFace = ptr TFontFace
+  PFontOptions = ptr TFontOptions
+  PMatrix = ptr Matrix
+  PUserDataKey = ptr UserDataKey
   PGlyph* = ptr TGlyph
   PTextExtents* = ptr TTextExtents
   PFontExtents* = ptr TFontExtents
@@ -168,8 +168,8 @@ proc cairo_create(target: PSurface): PContext
 proc cairo_reference(cr: PContext): PContext
 proc cairo_destroy(cr: PContext)
 proc cairo_get_reference_count(cr: PContext): int32
-proc cairo_get_user_data(cr: PContext, key: PUserDataKey): pointer
-proc cairo_set_user_data(cr: PContext, key: PUserDataKey, user_data: pointer, destroy: DestroyFunc): Status
+proc cairo_get_user_data(cr: PContext, key: UserDataKey): pointer
+proc cairo_set_user_data(cr: PContext, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 proc cairo_save(cr: PContext)
 proc cairo_restore(cr: PContext)
 proc cairo_push_group(cr: PContext)
@@ -278,8 +278,8 @@ proc cairo_font_face_destroy(font_face: PFontFace)
 proc cairo_font_face_get_reference_count(font_face: PFontFace): int32
 proc cairo_font_face_status(font_face: PFontFace): Status
 proc cairo_font_face_get_type(font_face: PFontFace): FontType
-proc cairo_font_face_get_user_data(font_face: PFontFace, key: PUserDataKey): pointer
-proc cairo_font_face_set_user_data(font_face: PFontFace, key: PUserDataKey, user_data: pointer, destroy: DestroyFunc): Status
+proc cairo_font_face_get_user_data(font_face: PFontFace, key: UserDataKey): pointer
+proc cairo_font_face_set_user_data(font_face: PFontFace, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 # Portable interface to general font features
 proc cairo_scaled_font_create(font_face: PFontFace, font_matrix, ctm: Matrix, options: PFontOptions): PScaledFont
 proc cairo_scaled_font_reference(scaled_font: PScaledFont): PScaledFont
@@ -287,8 +287,8 @@ proc cairo_scaled_font_destroy(scaled_font: PScaledFont)
 proc cairo_scaled_font_get_reference_count(scaled_font: PScaledFont): int32
 proc cairo_scaled_font_status(scaled_font: PScaledFont): Status
 proc cairo_scaled_font_get_type(scaled_font: PScaledFont): FontType
-proc cairo_scaled_font_get_user_data(scaled_font: PScaledFont, key: PUserDataKey): pointer
-proc cairo_scaled_font_set_user_data(scaled_font: PScaledFont, key: PUserDataKey, user_data: pointer, destroy: DestroyFunc): Status
+proc cairo_scaled_font_get_user_data(scaled_font: PScaledFont, key: UserDataKey): pointer
+proc cairo_scaled_font_set_user_data(scaled_font: PScaledFont, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 proc cairo_scaled_font_extents(scaled_font: PScaledFont, extents: PFontExtents)
 proc cairo_scaled_font_text_extents(scaled_font: PScaledFont, utf8: cstring, extents: PTextExtents)
 proc cairo_scaled_font_glyph_extents(scaled_font: PScaledFont, glyphs: PGlyph, num_glyphs: int32, extents: PTextExtents)
@@ -330,8 +330,8 @@ proc cairo_surface_get_type(surface: PSurface): SurfaceType
 proc cairo_surface_get_content(surface: PSurface): Content
 proc cairo_surface_write_to_png(surface: PSurface, filename: cstring): Status
 proc cairo_surface_write_to_png_stream(surface: PSurface, write_func: WriteFunc, closure: pointer): Status
-proc cairo_surface_get_user_data(surface: PSurface, key: PUserDataKey): pointer
-proc cairo_surface_set_user_data(surface: PSurface, key: PUserDataKey, user_data: pointer, destroy: DestroyFunc): Status
+proc cairo_surface_get_user_data(surface: PSurface, key: UserDataKey): pointer
+proc cairo_surface_set_user_data(surface: PSurface, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 proc cairo_surface_get_font_options(surface: PSurface, options: PFontOptions)
 proc cairo_surface_flush(surface: PSurface)
 proc cairo_surface_mark_dirty(surface: PSurface)
@@ -359,8 +359,8 @@ proc cairo_pattern_reference(pattern: PPattern): PPattern
 proc cairo_pattern_destroy(pattern: PPattern)
 proc cairo_pattern_get_reference_count(pattern: PPattern): int32
 proc cairo_pattern_status(pattern: PPattern): Status
-proc cairo_pattern_get_user_data(pattern: PPattern, key: PUserDataKey): pointer
-proc cairo_pattern_set_user_data(pattern: PPattern, key: PUserDataKey, user_data: pointer, destroy: DestroyFunc): Status
+proc cairo_pattern_get_user_data(pattern: PPattern, key: UserDataKey): pointer
+proc cairo_pattern_set_user_data(pattern: PPattern, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 proc cairo_pattern_get_type(pattern: PPattern): PatternType
 proc cairo_pattern_add_color_stop_rgb(pattern: PPattern, offset, red, green, blue: float64)
 proc cairo_pattern_add_color_stop_rgba(pattern: PPattern, offset, red, green, blue, alpha: float64)
