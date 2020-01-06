@@ -410,5 +410,5 @@ proc cairo_svg_version_to_string(version: SvgVersion): cstring
 # Functions to be used while debugging (not intended for use in production code)
 proc cairo_debug_reset_static_data()
 # new since 1.10
-proc cairo_surface_create_for_rectangle(target: PSurface, x,y,w,h: float64): PSurface
+proc cairo_surface_create_for_rectangle(target: PSurface, x, y, w, h: float64): PSurface
 {.pop.}

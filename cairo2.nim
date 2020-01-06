@@ -65,7 +65,7 @@ toCairoError:
     Win32GdiError,
     TagError
 
-template statusToString(status: Status): string =
+template statusToString(status) =
   $cairo_status_to_string(status)
 
 macro checkStatus(expr, raises: untyped): untyped =
@@ -78,9 +78,9 @@ macro checkStatus(expr, raises: untyped): untyped =
   for n in raises:
     result[1].add nnkOfBranch.newTree(newIdentNode("Status" & n.strVal), nnkRaiseStmt.newTree(
       newCall(bindSym"newException", newIdentNode("Cairo" & n.strVal),
-      newCall(bindSym"statusToString", statusVal))))
+      getAst(statusToString(statusVal)))))
   result[1].add nnkElse.newTree(newCall(bindSym"assert", newLit(false),
-    newCall(bindSym"statusToString", statusVal)))
+    getAst(statusToString(statusVal))))
 
 include "cairo_cheader.nim"
 
@@ -98,62 +98,69 @@ type
   Pattern* = object
     impl: PPattern
 
-proc `=`(cr: var Context; original: Context) {.error.}
 proc `=destroy`(cr: var Context) =
   if cr.impl != nil:
     cairo_destroy(cr.impl)
-    assert cairo_get_reference_count(cr.impl) == 0, "dangling pointers exist!"
     cr.impl = nil
+proc `=`(cr: var Context; original: Context) =
+  if cr.impl != nil: cairo_destroy(cr.impl)
+  cr.impl = cairo_reference(original.impl)
 proc `=sink`(cr: var Context; original: Context) =
   `=destroy`(cr)
   cr.impl = original.impl
 
-proc `=`(options: var FontOptions; original: FontOptions) =
-  options.impl = cairo_font_options_copy(original.impl)
 proc `=destroy`(options: var FontOptions) =
   if options.impl != nil:
     cairo_font_options_destroy(options.impl)
     options.impl = nil
+proc `=`(options: var FontOptions; original: FontOptions) =
+  if options.impl != original.impl:
+    `=destroy`(options)
+    options.impl = cairo_font_options_copy(original.impl)
 proc `=sink`(options: var FontOptions; original: FontOptions) =
   `=destroy`(options)
   options.impl = original.impl
 
-proc `=`(fontFace: var FontFace; original: FontFace) {.error.}
 proc `=destroy`(fontFace: var FontFace) =
   if fontFace.impl != nil:
     cairo_font_face_destroy(fontFace.impl)
-    assert cairo_font_face_get_reference_count(fontFace.impl) == 0, "dangling pointers exist!"
     fontFace.impl = nil
+proc `=`(fontFace: var FontFace; original: FontFace) =
+  if fontFace.impl != nil: cairo_destroy(fontFace.impl)
+  fontFace.impl = cairo_reference(original.impl)
 proc `=sink`(fontFace: var FontFace; original: FontFace) =
   `=destroy`(fontFace)
   fontFace.impl = original.impl
 
-proc `=`(scaledFont: var ScaledFont; original: ScaledFont) {.error.}
 proc `=destroy`(scaledFont: var ScaledFont) =
   if scaledFont.impl != nil:
     cairo_scaled_font_destroy(scaledFont.impl)
-    assert cairo_scaled_font_get_reference_count(scaledFont.impl) == 0, "dangling pointers exist!"
     scaledFont.impl = nil
+proc `=`(scaledFont: var ScaledFont; original: ScaledFont) =
+  if scaledFont.impl != nil: cairo_destroy(scaledFont.impl)
+  scaledFont.impl = cairo_reference(original.impl)
 proc `=sink`(scaledFont: var ScaledFont; original: ScaledFont) =
   `=destroy`(scaledFont)
   scaledFont.impl = original.impl
 
-proc `=`(surface: var Surface; original: Surface) {.error.}
 proc `=destroy`(surface: var Surface) =
   if surface.impl != nil:
     cairo_surface_destroy(surface.impl)
-    assert cairo_surface_get_reference_count(surface.impl) == 0, "dangling pointers exist!"
     surface.impl = nil
+proc `=`(surface: var Surface; original: Surface) =
+  if surface.impl != nil: cairo_surface_destroy(surface.impl)
+  surface.impl = cairo_surface_reference(original.impl)
 proc `=sink`(surface: var Surface; original: Surface) =
   `=destroy`(surface)
   surface.impl = original.impl
 
-proc `=`(pattern: var Pattern; original: Pattern) {.error.}
 proc `=destroy`(pattern: var Pattern) =
   if pattern.impl != nil:
     cairo_pattern_destroy(pattern.impl)
-    assert cairo_pattern_get_reference_count(pattern.impl) == 0, "dangling pointers exist!"
     pattern.impl = nil
+proc `=`(pattern: var Pattern; original: Pattern) =
+  if pattern.impl != nil: cairo_surface_destroy(pattern.impl)
+  pattern.impl = cairo_surface_reference(original.impl)
 proc `=sink`(pattern: var Pattern; original: Pattern) =
   `=destroy`(pattern)
   pattern.impl = original.impl
