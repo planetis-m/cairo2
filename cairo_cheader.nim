@@ -14,40 +14,6 @@ else:
   {.pragma: libcairo, cdecl, dynlib: LibCairo.}
 
 type
-  Status* = enum
-    StatusSuccess,
-    StatusNoMemory,
-    StatusInvalidRestore,
-    StatusInvalidPopGroup,
-    StatusNoCurrentPoint,
-    StatusInvalidMatrix,
-    StatusInvalidStatus,
-    StatusNullPointer,
-    StatusInvalidString,
-    StatusInvalidPathData,
-    StatusReadError,
-    StatusWriteError,
-    StatusSurfaceFinished,
-    StatusSurfaceTypeMismatch,
-    StatusPatternTypeMismatch,
-    StatusInvalidContent,
-    StatusInvalidFormat,
-    StatusInvalidVisual,
-    StatusFileNotFound,
-    StatusInvalidDash,
-    StatusInvalidDscComment,
-    StatusInvalidIndex,
-    StatusClipNotRepresentable,
-    StatusTempFileError,
-    StatusInvalidStride,
-    StatusFontTypeMismatch,
-    StatusUserFontImmutable,
-    StatusUserFontError,
-    StatusNegativeCount,
-    StatusInvalidClusters,
-    StatusInvalidSlant,
-    StatusInvalidWeight
-
   Operator* = enum
     OperatorClear,
     OperatorSource,
@@ -123,6 +89,7 @@ type
     SurfaceTypeSvg, SurfaceTypeOs2
   SvgVersion* = enum
     SvgVersion11, SvgVersion12
+  CairoBool = int32
   DestroyFunc* = proc (data: pointer) {.cdecl.}
   WriteFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
   ReadFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
@@ -257,8 +224,8 @@ proc cairo_fill_preserve(cr: PContext)
 proc cairo_copy_page(cr: PContext)
 proc cairo_show_page(cr: PContext)
 # Insideness testing
-proc cairo_in_stroke(cr: PContext, x, y: float64): int32
-proc cairo_in_fill(cr: PContext, x, y: float64): int32
+proc cairo_in_stroke(cr: PContext, x, y: float64): CairoBool
+proc cairo_in_fill(cr: PContext, x, y: float64): CairoBool
 # Rectangular extents
 proc cairo_stroke_extents(cr: PContext, x1, y1, x2, y2: var float64)
 proc cairo_fill_extents(cr: PContext, x1, y1, x2, y2: var float64)
@@ -275,7 +242,7 @@ proc cairo_font_options_copy(original: PFontOptions): PFontOptions
 proc cairo_font_options_destroy(options: PFontOptions)
 proc cairo_font_options_status(options: PFontOptions): Status
 proc cairo_font_options_merge(options, other: PFontOptions)
-proc cairo_font_options_equal(options, other: PFontOptions): int32
+proc cairo_font_options_equal(options, other: PFontOptions): CairoBool
 proc cairo_font_options_hash(options: PFontOptions): int32
 proc cairo_font_options_set_antialias(options: PFontOptions, antialias: Antialias)
 proc cairo_font_options_get_antialias(options: PFontOptions): Antialias
