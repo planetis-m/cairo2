@@ -117,25 +117,25 @@ proc `=sink`(options: var Context; original: Context) =
   `=destroy`(options)
   options.impl = original.impl
 
-proc `=`(font_face: var FontFace; original: FontFace) {.error.}
-proc `=destroy`(font_face: var FontFace) =
-  if font_face.impl != nil:
-    cairo_font_face_destroy(font_face.impl)
-    assert cairo_font_face_get_reference_count(font_face.impl) == 0, "dangling pointers exist!"
-    font_face.impl = nil
-proc `=sink`(font_face: var FontFace; original: FontFace) =
-  `=destroy`(font_face)
-  font_face.impl = original.impl
+proc `=`(fontFace: var FontFace; original: FontFace) {.error.}
+proc `=destroy`(fontFace: var FontFace) =
+  if fontFace.impl != nil:
+    cairo_font_face_destroy(fontFace.impl)
+    assert cairo_font_face_get_reference_count(fontFace.impl) == 0, "dangling pointers exist!"
+    fontFace.impl = nil
+proc `=sink`(fontFace: var FontFace; original: FontFace) =
+  `=destroy`(fontFace)
+  fontFace.impl = original.impl
 
-proc `=`(scaled_font: var ScaledFont; original: ScaledFont) {.error.}
-proc `=destroy`(scaled_font: var ScaledFont) =
-  if scaled_font.impl != nil:
-    cairo_scaled_font_destroy(scaled_font.impl)
-    assert cairo_scaled_font_get_reference_count(scaled_font.impl) == 0, "dangling pointers exist!"
-    scaled_font.impl = nil
-proc `=sink`(scaled_font: var ScaledFont; original: ScaledFont) =
-  `=destroy`(scaled_font)
-  scaled_font.impl = original.impl
+proc `=`(scaledFont: var ScaledFont; original: ScaledFont) {.error.}
+proc `=destroy`(scaledFont: var ScaledFont) =
+  if scaledFont.impl != nil:
+    cairo_scaled_font_destroy(scaledFont.impl)
+    assert cairo_scaled_font_get_reference_count(scaledFont.impl) == 0, "dangling pointers exist!"
+    scaledFont.impl = nil
+proc `=sink`(scaledFont: var ScaledFont; original: ScaledFont) =
+  `=destroy`(scaledFont)
+  scaledFont.impl = original.impl
 
 proc `=`(surface: var Surface; original: Surface) {.error.}
 proc `=destroy`(surface: var Surface) =
@@ -165,8 +165,8 @@ proc create*(target: Surface): Context =
   cairo_create(target.impl)
 proc getUserData*(cr: Context, key: UserDataKey): pointer =
   cairo_get_user_data(cr.impl, key)
-proc setUserData*(cr: Context, key: UserDataKey, user_data: pointer, destroy: DestroyFunc) =
-  checkStatus cairo_set_user_data(cr.impl, key, user_data, destroy), [NoMemory]
+proc setUserData*(cr: Context, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
+  checkStatus cairo_set_user_data(cr.impl, key, userData, destroy), [NoMemory]
 proc save*(cr: Context) =
   cairo_save(cr.impl)
 proc restore*(cr: Context) =
@@ -194,14 +194,14 @@ proc setTolerance*(cr: Context, tolerance: float64) =
   cairo_set_tolerance(cr.impl, tolerance)
 proc setAntialias*(cr: Context, antialias: Antialias) =
   cairo_set_antialias(cr.impl, antialias)
-proc setFillRule*(cr: Context, fill_rule: FillRule) =
-  cairo_set_fill_rule(cr.impl, fill_rule)
+proc setFillRule*(cr: Context, fillRule: FillRule) =
+  cairo_set_fill_rule(cr.impl, fillRule)
 proc setLineWidth*(cr: Context, width: float64) =
   cairo_set_line_width(cr.impl, width)
-proc setLineCap*(cr: Context, line_cap: LineCap) =
-  cairo_set_line_cap(cr.impl, line_cap)
-proc setLineJoin*(cr: Context, line_join: LineJoin) =
-  cairo_set_line_join(cr.impl, line_join)
+proc setLineCap*(cr: Context, lineCap: LineCap) =
+  cairo_set_line_cap(cr.impl, lineCap)
+proc setLineJoin*(cr: Context, lineJoin: LineJoin) =
+  cairo_set_line_join(cr.impl, lineJoin)
 proc setDash*(cr: Context, dashes: openarray[float64], offset: float64) =
   cairo_set_dash(cr: Context, dashes: openarray[float64], offset: float64)
 proc setMiterLimit*(cr: Context, limit: float64) =
@@ -258,8 +258,8 @@ proc paintWithAlpha*(cr: Context, alpha: float64) =
   cairo_paint_with_alpha(cr.impl, alpha)
 proc mask*(cr: Context, pattern: Pattern) =
   cairo_mask(cr.impl, pattern.impl)
-proc mask*(cr: Context, surface: Surface, surface_x, surface_y: float64) =
-  cairo_mask_surface(cr.impl, surface.impl, surface_x, surface_y)
+proc mask*(cr: Context, surface: Surface, surfaceX, surfaceY: float64) =
+  cairo_mask_surface(cr.impl, surface.impl, surfaceX, surfaceY)
 proc stroke*(cr: Context) =
   cairo_stroke(cr.impl)
 proc strokePreserve*(cr: Context) =
@@ -308,16 +308,16 @@ proc setAntialias*(options: FontOptions, antialias: Antialias) =
   cairo_font_options_set_antialias(options, antialias)
 proc getAntialias*(options: FontOptions): Antialias =
   cairo_font_options_get_antialias(options)
-proc setSubpixelOrder*(options: FontOptions, subpixel_order: SubpixelOrder) =
-  cairo_font_options_set_subpixel_order(options, subpixel_order)
+proc setSubpixelOrder*(options: FontOptions, subpixelOrder: SubpixelOrder) =
+  cairo_font_options_set_subpixel_order(options, subpixelOrder)
 proc getSubpixelOrder*(options: FontOptions): SubpixelOrder =
   cairo_font_options_get_subpixel_order(options)
-proc setHintStyle*(options: FontOptions, hint_style: HintStyle) =
-  cairo_font_options_set_hint_style(options, hint_style)
+proc setHintStyle*(options: FontOptions, hintStyle: HintStyle) =
+  cairo_font_options_set_hint_style(options, hintStyle)
 proc getHintStyle*(options: FontOptions): HintStyle =
   cairo_font_options_get_hint_style(options)
-proc setHintMetrics*(options: FontOptions, hint_metrics: HintMetrics) =
-  cairo_font_options_set_hint_metrics(options, hint_metrics)
+proc setHintMetrics*(options: FontOptions, hintMetrics: HintMetrics) =
+  cairo_font_options_set_hint_metrics(options, hintMetrics)
 proc getHintMetrics*(options: FontOptions): HintMetrics =
   cairo_font_options_get_hint_metrics(options)
 # This interface is for dealing with text as text, not caring about the
@@ -334,62 +334,62 @@ proc setFontOptions*(cr: Context, options: FontOptions) =
   cairo_set_font_options(cr.impl, options)
 proc getFontOptions*(cr: Context, options: FontOptions) =
   cairo_get_font_options(cr.impl, options)
-proc setFontFace*(cr: Context, font_face: FontFace) =
-  cairo_set_font_face(cr.impl, font_face.impl)
+proc setFontFace*(cr: Context, fontFace: FontFace) =
+  cairo_set_font_face(cr.impl, fontFace.impl)
 proc getFontFace*(cr: Context): FontFace =
   cairo_get_font_face(cr.impl)
-proc setScaledFont*(cr: Context, scaled_font: ScaledFont) =
-  cairo_set_scaled_font(cr.impl, scaled_font.impl)
+proc setScaledFont*(cr: Context, scaledFont: ScaledFont) =
+  cairo_set_scaled_font(cr.impl, scaledFont.impl)
 proc getScaledFont*(cr: Context): ScaledFont =
   cairo_get_scaled_font(cr.impl)
 proc showText*(cr: Context, utf8: cstring) =
   cairo_show_text(cr.impl, utf8)
-proc showGlyphs*(cr: Context, glyphs: Glyph, num_glyphs: int32) =
-  cairo_show_glyphs(cr.impl, glyphs, num_glyphs)
+proc showGlyphs*(cr: Context, glyphs: Glyph, numGlyphs: int32) =
+  cairo_show_glyphs(cr.impl, glyphs, numGlyphs)
 proc textPath*(cr: Context, utf8: cstring) =
   cairo_text_path(cr.impl, utf8)
-proc glyphPath*(cr: Context, glyphs: Glyph, num_glyphs: int32) =
-  cairo_glyph_path(cr.impl, glyphs, num_glyphs)
+proc glyphPath*(cr: Context, glyphs: Glyph, numGlyphs: int32) =
+  cairo_glyph_path(cr.impl, glyphs, numGlyphs)
 proc textExtents*(cr: Context, utf8: cstring, extents: TextExtents) =
   cairo_text_extents(cr.impl, utf8, extents)
-proc glyphExtents*(cr: Context, glyphs: Glyph, num_glyphs: int32, extents: TextExtents) =
-  cairo_glyph_extents(cr.impl, glyphs, num_glyphs, extents)
+proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int32, extents: TextExtents) =
+  cairo_glyph_extents(cr.impl, glyphs, numGlyphs, extents)
 proc fontExtents*(cr: Context, extents: FontExtents) =
   cairo_font_extents(cr.impl, extents)
 # Generic identifier for a font style
-proc status*(font_face: FontFace): Status =
-  cairo_font_face_status(font_face.impl)
-proc getType*(font_face: FontFace): FontType =
-  cairo_font_face_get_type(font_face.impl)
-proc getUserData*(font_face: FontFace, key: UserDataKey): pointer =
-  cairo_font_face_get_user_data(font_face.impl, key)
-proc setUserData*(font_face: FontFace, key: UserDataKey, user_data: pointer, destroy: DestroyFunc) =
-  checkStatus cairo_font_face_set_user_data(font_face.impl, key, user_data, destroy), [NoMemory]
+proc status*(fontFace: FontFace): Status =
+  cairo_font_face_status(fontFace.impl)
+proc getType*(fontFace: FontFace): FontType =
+  cairo_font_face_get_type(fontFace.impl)
+proc getUserData*(fontFace: FontFace, key: UserDataKey): pointer =
+  cairo_font_face_get_user_data(fontFace.impl, key)
+proc setUserData*(fontFace: FontFace, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
+  checkStatus cairo_font_face_set_user_data(fontFace.impl, key, userData, destroy), [NoMemory]
 # Portable interface to general font features
-proc scaledFontCreate*(font_face: FontFace, font_matrix: Matrix, ctm: Matrix, options: FontOptions): ScaledFont =
-  cairo_scaled_font_create(font_face.impl, font_matrix, ctm, options)
-proc status*(scaled_font: ScaledFont): Status =
-  cairo_scaled_font_status(scaled_font.impl)
-proc getType*(scaled_font: ScaledFont): FontType =
-  cairo_scaled_font_get_type(scaled_font.impl)
-proc getUserData*(scaled_font: ScaledFont, key: UserDataKey): pointer =
-  cairo_scaled_font_get_user_data(scaled_font.impl, key)
-proc setUserData*(scaled_font: ScaledFont, key: UserDataKey, user_data: pointer, destroy: DestroyFunc) =
-  checkStatus cairo_scaled_font_set_user_data(scaled_font.impl, key, user_data, destroy), [NoMemory]
-proc extents*(scaled_font: ScaledFont, extents: FontExtents) =
-  cairo_scaled_font_extents(scaled_font.impl, extents)
-proc textExtents*(scaled_font: ScaledFont, utf8: cstring, extents: TextExtents) =
-  cairo_scaled_font_text_extents(scaled_font.impl, utf8, extents)
-proc glyphExtents*(scaled_font: ScaledFont, glyphs: Glyph, num_glyphs: int32, extents: TextExtents) =
-  cairo_scaled_font_glyph_extents(scaled_font.impl, glyphs, num_glyphs, extents)
-proc getFontFace*(scaled_font: ScaledFont): FontFace =
-  cairo_scaled_font_get_font_face(scaled_font.impl)
-proc getFontMatrix*(scaled_font: ScaledFont, font_matrix: Matrix) =
-  cairo_scaled_font_get_font_matrix(scaled_font.impl, font_matrix)
-proc getCtm*(scaled_font: ScaledFont, ctm: Matrix) =
-  cairo_scaled_font_get_ctm(scaled_font.impl, ctm)
-proc getFontOptions*(scaled_font: ScaledFont, options: FontOptions) =
-  cairo_scaled_font_get_font_options(scaled_font.impl, options)
+proc scaledFontCreate*(fontFace: FontFace, fontMatrix: Matrix, ctm: Matrix, options: FontOptions): ScaledFont =
+  cairo_scaled_font_create(fontFace.impl, fontMatrix, ctm, options)
+proc status*(scaledFont: ScaledFont): Status =
+  cairo_scaled_font_status(scaledFont.impl)
+proc getType*(scaledFont: ScaledFont): FontType =
+  cairo_scaled_font_get_type(scaledFont.impl)
+proc getUserData*(scaledFont: ScaledFont, key: UserDataKey): pointer =
+  cairo_scaled_font_get_user_data(scaledFont.impl, key)
+proc setUserData*(scaledFont: ScaledFont, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
+  checkStatus cairo_scaled_font_set_user_data(scaledFont.impl, key, userData, destroy), [NoMemory]
+proc extents*(scaledFont: ScaledFont, extents: FontExtents) =
+  cairo_scaled_font_extents(scaledFont.impl, extents)
+proc textExtents*(scaledFont: ScaledFont, utf8: cstring, extents: TextExtents) =
+  cairo_scaled_font_text_extents(scaledFont.impl, utf8, extents)
+proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int32, extents: TextExtents) =
+  cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs, extents)
+proc getFontFace*(scaledFont: ScaledFont): FontFace =
+  cairo_scaled_font_get_font_face(scaledFont.impl)
+proc getFontMatrix*(scaledFont: ScaledFont, fontMatrix: Matrix) =
+  cairo_scaled_font_get_font_matrix(scaledFont.impl, fontMatrix)
+proc getCtm*(scaledFont: ScaledFont, ctm: Matrix) =
+  cairo_scaled_font_get_ctm(scaledFont.impl, ctm)
+proc getFontOptions*(scaledFont: ScaledFont, options: FontOptions) =
+  cairo_scaled_font_get_font_options(scaledFont.impl, options)
 # Query functions
 proc getOperator*(cr: Context): Operator =
   cairo_get_operator(cr.impl)
@@ -443,12 +443,12 @@ proc getContent*(surface: Surface): Content =
   cairo_surface_get_content(surface.impl)
 proc writeToPng*(surface: Surface, filename: string) =
   checkStatus cairo_surface_write_to_png(surface.impl, filename), [NoMemory, SurfaceTypeMismatch, WriteError, PngError]
-proc writeToPng*(surface: Surface, write_func: WriteFunc, closure: pointer) =
-  checkStatus cairo_surface_write_to_png_stream(surface.impl, write_func, closure), [NoMemory, SurfaceTypeMismatch, PngError]
+proc writeToPng*(surface: Surface, writeFunc: WriteFunc, closure: pointer) =
+  checkStatus cairo_surface_write_to_png_stream(surface.impl, writeFunc, closure), [NoMemory, SurfaceTypeMismatch, PngError]
 proc getUserData*(surface: Surface, key: UserDataKey): pointer =
   cairo_surface_get_user_data(surface.impl, key)
-proc setUserData*(surface: Surface, key: UserDataKey, user_data: pointer, destroy: DestroyFunc) =
-  checkStatus cairo_surface_set_user_data(surface.impl, key, user_data, destroy), [NoMemory]
+proc setUserData*(surface: Surface, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
+  checkStatus cairo_surface_set_user_data(surface.impl, key, userData, destroy), [NoMemory]
 proc getFontOptions*(surface: Surface, options: FontOptions) =
   cairo_surface_get_font_options(surface.impl, options)
 proc flush*(surface: Surface) =
@@ -457,12 +457,12 @@ proc markDirty*(surface: Surface) =
   cairo_surface_mark_dirty(surface.impl)
 proc markDirtyRectangle*(surface: Surface, x, y, width, height: int32) =
   cairo_surface_mark_dirty_rectangle(surface.impl, x, y, width, height)
-proc setDeviceOffset*(surface: Surface, x_offset, y_offset: float64) =
-  cairo_surface_set_device_offset(surface.impl, x_offset, y_offset)
-proc getDeviceOffset*(surface: Surface, x_offset, y_offset: var float64) =
-  cairo_surface_get_device_offset(surface.impl, x_offset, y_offset)
-proc setFallbackResolution*(surface: Surface, x_pixels_per_inch, y_pixels_per_inch: float64) =
-  cairo_surface_set_fallback_resolution(surface.impl, x_pixels_per_inch, y_pixels_per_inch)
+proc setDeviceOffset*(surface: Surface, xOffset, yOffset: float64) =
+  cairo_surface_set_device_offset(surface.impl, xOffset, yOffset)
+proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float64) =
+  cairo_surface_get_device_offset(surface.impl, xOffset, yOffset)
+proc setFallbackResolution*(surface: Surface, xPixelsPerInch, yPixelsPerInch: float64) =
+  cairo_surface_set_fallback_resolution(surface.impl, xPixelsPerInch, yPixelsPerInch)
 # Image-surface functions
 proc imageSurfaceCreate*(format: Format, width, height: int32): Surface =
   cairo_image_surface_create(format, width, height)
@@ -480,8 +480,8 @@ proc getStride*(surface: Surface): int32 =
   cairo_image_surface_get_stride(surface.impl)
 proc imageSurfaceCreateFromPng*(filename: cstring): Surface =
   cairo_image_surface_create_from_png(filename)
-proc imageSurfaceCreateFromPng*(read_func: ReadFunc, closure: pointer): Surface =
-  cairo_image_surface_create_from_png_stream(read_func, closure)
+proc imageSurfaceCreateFromPng*(readFunc: ReadFunc, closure: pointer): Surface =
+  cairo_image_surface_create_from_png_stream(readFunc, closure)
 # Pattern creation functions
 proc patternCreateRgb*(red, green, blue: float64): Pattern =
   cairo_pattern_create_rgb(red, green, blue)
@@ -497,8 +497,8 @@ proc status*(pattern: Pattern): Status =
   cairo_pattern_status(pattern.impl)
 proc getUserData*(pattern: Pattern, key: UserDataKey): pointer =
   cairo_pattern_get_user_data(pattern.impl, key)
-proc setUserData*(pattern: Pattern, key: UserDataKey, user_data: pointer, destroy: DestroyFunc) =
-  checkStatus cairo_pattern_set_user_data(pattern.impl, key, user_data, destroy), [NoMemory]
+proc setUserData*(pattern: Pattern, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
+  checkStatus cairo_pattern_set_user_data(pattern.impl, key, userData, destroy), [NoMemory]
 proc getType*(pattern: Pattern): PatternType =
   cairo_pattern_get_type(pattern.impl)
 proc addColorStopRgb*(pattern: Pattern, offset, red, green, blue: float64) =
@@ -555,19 +555,19 @@ proc transformDistance*(matrix: Matrix, dx, dy: var float64) =
 proc transformPoint*(matrix: Matrix, x, y: var float64) =
   cairo_matrix_transform_point(matrix, x, y)
 # PDF functions
-proc pdfSurfaceCreate*(filename: cstring, width_in_points, height_in_points: float64): Surface =
-  cairo_pdf_surface_create(filename, width_in_points, height_in_points)
-proc pdfSurfaceCreateForStream*(write_func: WriteFunc, closure: pointer, width_in_points, height_in_points: float64): Surface =
-  cairo_pdf_surface_create_for_stream(write_func, closure, width_in_points, height_in_points)
-proc pdfSurfaceSetSize*(surface: Surface, width_in_points, height_in_points: float64) =
-  cairo_pdf_surface_set_size(surface.impl, width_in_points, height_in_points)
+proc pdfSurfaceCreate*(filename: cstring, widthInPoints, heightInPoints: float64): Surface =
+  cairo_pdf_surface_create(filename, widthInPoints, heightInPoints)
+proc pdfSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+  cairo_pdf_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints)
+proc pdfSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float64) =
+  cairo_pdf_surface_set_size(surface.impl, widthInPoints, heightInPoints)
 # PS functions
-proc psSurfaceCreate*(filename: cstring, width_in_points, height_in_points: float64): Surface =
-  cairo_ps_surface_create(filename, width_in_points, height_in_points)
-proc psSurfaceCreateForStream*(write_func: WriteFunc, closure: pointer, width_in_points, height_in_points: float64): Surface =
-  cairo_ps_surface_create_for_stream(write_func, closure, width_in_points, height_in_points)
-proc psSurfaceSetSize*(surface: Surface, width_in_points, height_in_points: float64) =
-  cairo_ps_surface_set_size(surface.impl, width_in_points, height_in_points)
+proc psSurfaceCreate*(filename: cstring, widthInPoints, heightInPoints: float64): Surface =
+  cairo_ps_surface_create(filename, widthInPoints, heightInPoints)
+proc psSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+  cairo_ps_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints)
+proc psSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float64) =
+  cairo_ps_surface_set_size(surface.impl, widthInPoints, heightInPoints)
 proc psSurfaceDscComment*(surface: Surface, comment: cstring) =
   cairo_ps_surface_dsc_comment(surface.impl, comment)
 proc psSurfaceDscBeginSetup*(surface: Surface) =
@@ -575,10 +575,10 @@ proc psSurfaceDscBeginSetup*(surface: Surface) =
 proc psSurfaceDscBeginPageSetup*(surface: Surface) =
   cairo_ps_surface_dsc_begin_page_setup(surface.impl)
 # SVG functions
-proc svgSurfaceCreate*(filename: cstring, width_in_points, height_in_points: float64): Surface =
-  cairo_svg_surface_create(filename, width_in_points, height_in_points)
-proc svgSurfaceCreateForStream*(write_func: WriteFunc, closure: pointer, width_in_points, height_in_points: float64): Surface =
-  cairo_svg_surface_create_for_stream(write_func, closure, width_in_points, height_in_points)
+proc svgSurfaceCreate*(filename: cstring, widthInPoints, heightInPoints: float64): Surface =
+  cairo_svg_surface_create(filename, widthInPoints, heightInPoints)
+proc svgSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+  cairo_svg_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints)
 proc svgSurfaceRestrictToVersion*(surface: Surface, version: SvgVersion) =
   cairo_svg_surface_restrict_to_version(surface.impl, version)
   #todo: see how translate this
