@@ -1,4 +1,4 @@
-import macros
+import macros, hashes
 
 macro toCairoError(body: untyped): untyped =
   template declSubty(a, b) =
@@ -165,8 +165,13 @@ proc `=`(pattern: var Pattern; original: Pattern) =
   if pattern.impl != nil: cairo_surface_destroy(pattern.impl)
   pattern.impl = cairo_surface_reference(original.impl)
 
-proc version*(): int32 =
+proc version*(): int =
   cairo_version()
+proc version*(major, minor, micro: var int) =
+  let version = version()
+  major = version div 10000
+  minor = (version mod (major * 10000)) div 100
+  micro = (version mod ((major * 10000) + (minor * 100)))
 proc versionString*(): string =
   $cairo_version_string()
 proc create*(target: Surface): Context =
@@ -308,8 +313,8 @@ proc merge*(options, other: FontOptions) =
   cairo_font_options_merge(options.impl, other.impl)
 proc equal*(options, other: FontOptions): bool =
   cairo_font_options_equal(options.impl, other.impl) == 1'i32
-proc hash*(options: FontOptions): int32 =
-  cairo_font_options_hash(options.impl)
+proc hash*(options: FontOptions): Hash =
+  result = Hash(cairo_font_options_hash(options.impl))
 proc setAntialias*(options: FontOptions, antialias: Antialias) =
   cairo_font_options_set_antialias(options.impl, antialias)
 proc getAntialias*(options: FontOptions): Antialias =
@@ -351,16 +356,16 @@ proc getScaledFont*(cr: Context): ScaledFont =
   result = ScaledFont(impl: cairo_get_scaled_font(cr.impl))
 proc showText*(cr: Context, utf8: string) =
   cairo_show_text(cr.impl, utf8)
-proc showGlyphs*(cr: Context, glyphs: Glyph, numGlyphs: int32) =
-  cairo_show_glyphs(cr.impl, glyphs, numGlyphs)
+proc showGlyphs*(cr: Context, glyphs: Glyph, numGlyphs: int) =
+  cairo_show_glyphs(cr.impl, glyphs, numGlyphs.int32)
 proc textPath*(cr: Context, utf8: string) =
   cairo_text_path(cr.impl, utf8)
-proc glyphPath*(cr: Context, glyphs: Glyph, numGlyphs: int32) =
-  cairo_glyph_path(cr.impl, glyphs, numGlyphs)
+proc glyphPath*(cr: Context, glyphs: Glyph, numGlyphs: int) =
+  cairo_glyph_path(cr.impl, glyphs, numGlyphs.int32)
 proc textExtents*(cr: Context, utf8: string, extents: TextExtents) =
   cairo_text_extents(cr.impl, utf8, extents)
-proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int32, extents: TextExtents) =
-  cairo_glyph_extents(cr.impl, glyphs, numGlyphs, extents)
+proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int, extents: TextExtents) =
+  cairo_glyph_extents(cr.impl, glyphs, numGlyphs.int32, extents)
 proc fontExtents*(cr: Context, extents: FontExtents) =
   cairo_font_extents(cr.impl, extents)
 # Generic identifier for a font style
@@ -383,8 +388,8 @@ proc extents*(scaledFont: ScaledFont, extents: FontExtents) =
   cairo_scaled_font_extents(scaledFont.impl, extents)
 proc textExtents*(scaledFont: ScaledFont, utf8: string, extents: TextExtents) =
   cairo_scaled_font_text_extents(scaledFont.impl, utf8, extents)
-proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int32, extents: TextExtents) =
-  cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs, extents)
+proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int, extents: TextExtents) =
+  cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs.int32, extents)
 proc getFontFace*(scaledFont: ScaledFont): FontFace =
   result = FontFace(impl: cairo_scaled_font_get_font_face(scaledFont.impl))
 proc getFontMatrix*(scaledFont: ScaledFont): Matrix =
@@ -415,10 +420,11 @@ proc getLineJoin*(cr: Context): LineJoin =
   cairo_get_line_join(cr.impl)
 proc getMiterLimit*(cr: Context): float64 =
   cairo_get_miter_limit(cr.impl)
-proc getDashCount*(cr: Context): int32 =
+proc getDashCount*(cr: Context): int =
   cairo_get_dash_count(cr.impl)
-proc getDash*(cr: Context, dashes, offset: var float64) =
-  cairo_get_dash(cr.impl, dashes, offset)
+proc getDash*(cr: Context, offset: var float64): seq[float64] =
+  result = newSeq[float64](getDashCount(cr))
+  cairo_get_dash(cr.impl, result[0].addr, offset)
 proc getMatrix*(cr: Context): Matrix =
   cairo_get_matrix(cr.impl, result)
 proc getTarget*(cr: Context): Surface =
@@ -432,8 +438,8 @@ proc copyPathFlat*(cr: Context): Path =
 proc appendPath*(cr: Context, path: Path) =
   cairo_append_path(cr.impl, path.impl)
 # Surface manipulation
-proc surfaceCreateSimilar*(other: Surface, content: Content, width, height: int32): Surface =
-  result = Surface(impl: cairo_surface_create_similar(other, content, width, height))
+proc surfaceCreateSimilar*(other: Surface, content: Content, width, height: int): Surface =
+  result = Surface(impl: cairo_surface_create_similar(other, content, width.int32, height.int32))
 proc getType*(surface: Surface): SurfaceType =
   cairo_surface_get_type(surface.impl)
 proc getContent*(surface: Surface): Content =
@@ -453,8 +459,8 @@ proc flush*(surface: Surface) =
   cairo_surface_flush(surface.impl)
 proc markDirty*(surface: Surface) =
   cairo_surface_mark_dirty(surface.impl)
-proc markDirtyRectangle*(surface: Surface, x, y, width, height: int32) =
-  cairo_surface_mark_dirty_rectangle(surface.impl, x, y, width, height)
+proc markDirtyRectangle*(surface: Surface, x, y, width, height: int) =
+  cairo_surface_mark_dirty_rectangle(surface.impl, x.int32, y.int32, width.int32, height.int32)
 proc setDeviceOffset*(surface: Surface, xOffset, yOffset: float64) =
   cairo_surface_set_device_offset(surface.impl, xOffset, yOffset)
 proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float64) =
@@ -462,19 +468,19 @@ proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float64) =
 proc setFallbackResolution*(surface: Surface, xPixelsPerInch, yPixelsPerInch: float64) =
   cairo_surface_set_fallback_resolution(surface.impl, xPixelsPerInch, yPixelsPerInch)
 # Image-surface functions
-proc imageSurfaceCreate*(format: Format, width, height: int32): Surface =
-  result = Surface(impl: cairo_image_surface_create(format, width, height))
-proc imageSurfaceCreate*(data: string, format: Format, width, height, stride: int32): Surface =
-  result = Surface(impl: cairo_image_surface_create_for_data(data, format, width, height, stride))
+proc imageSurfaceCreate*(format: Format, width, height: int): Surface =
+  result = Surface(impl: cairo_image_surface_create(format, width.int32, height.int32))
+proc imageSurfaceCreate*(data: string, format: Format, width, height, stride: int): Surface =
+  result = Surface(impl: cairo_image_surface_create_for_data(data, format, width.int32, height.int32, stride.int32))
 proc getData*(surface: Surface): string =
   $cairo_image_surface_get_data(surface.impl)
 proc getFormat*(surface: Surface): Format =
   cairo_image_surface_get_format(surface.impl)
-proc getWidth*(surface: Surface): int32 =
+proc getWidth*(surface: Surface): int =
   cairo_image_surface_get_width(surface.impl)
-proc getHeight*(surface: Surface): int32 =
+proc getHeight*(surface: Surface): int =
   cairo_image_surface_get_height(surface.impl)
-proc getStride*(surface: Surface): int32 =
+proc getStride*(surface: Surface): int =
   cairo_image_surface_get_stride(surface.impl)
 proc imageSurfaceCreateFromPng*(filename: string): Surface =
   result = Surface(impl: cairo_image_surface_create_from_png(filename))
@@ -517,10 +523,10 @@ proc getRgba*(pattern: Pattern, red, green, blue, alpha: var float64) =
   checkStatus cairo_pattern_get_rgba(pattern.impl, red, green, blue, alpha), [PatternTypeMismatch]
 proc getSurface*(pattern: Pattern, surface: Surface) =
   checkStatus cairo_pattern_get_surface(pattern.impl, surface.impl), [PatternTypeMismatch]
-proc getColorStopRgba*(pattern: Pattern, index: int32, offset, red, green, blue, alpha: var float64) =
-  checkStatus cairo_pattern_get_color_stop_rgba(index, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
-proc getColorStopCount*(pattern: Pattern, count: var int32) =
-  checkStatus cairo_pattern_get_color_stop_count(pattern.impl, count), [PatternTypeMismatch]
+proc getColorStopRgba*(pattern: Pattern, index: int, offset, red, green, blue, alpha: var float64) =
+  checkStatus cairo_pattern_get_color_stop_rgba(index.int32, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
+proc getColorStopCount*(pattern: Pattern): int =
+  checkStatus cairo_pattern_get_color_stop_count(pattern.impl, result.int32), [PatternTypeMismatch]
 proc getLinearPoints*(pattern: Pattern, x0, y0, x1, y1: var float64) =
   checkStatus cairo_pattern_get_linear_points(pattern.impl, x0, y0, x1, y1), [PatternTypeMismatch]
 proc getRadialCircles*(pattern: Pattern, x0, y0, r0, x1, y1, r1: var float64) =
@@ -587,13 +593,6 @@ proc debugResetStaticData*() =
 # new since 1.10
 proc surfaceCreateForRectangle*(target: Surface, x, y, w, h: float64): Surface =
   result = Surface(impl: cairo_surface_create_for_rectangle(target.impl, x, y, w, h))
-
-proc version*(major, minor, micro: var int32) =
-  var version: int32
-  version = version()
-  major = version div 10000'i32
-  minor = (version mod (major * 10000'i32)) div 100'i32
-  micro = (version mod ((major * 10000'i32) + (minor * 100'i32)))
 
 iterator items*(path: Path): PathSegment =
   var i = 0

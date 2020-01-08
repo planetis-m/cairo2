@@ -316,7 +316,7 @@ proc cairo_get_line_cap(cr: PContext): LineCap
 proc cairo_get_line_join(cr: PContext): LineJoin
 proc cairo_get_miter_limit(cr: PContext): float64
 proc cairo_get_dash_count(cr: PContext): int32
-proc cairo_get_dash(cr: PContext, dashes, offset: var float64)
+proc cairo_get_dash(cr: PContext, dashes: ptr[float64], offset: var float64)
 proc cairo_get_matrix(cr: PContext, matrix: var Matrix)
 proc cairo_get_target(cr: PContext): PSurface
 proc cairo_get_group_target(cr: PContext): PSurface
