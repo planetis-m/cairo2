@@ -79,8 +79,7 @@ macro checkStatus(expr, raises: untyped): untyped =
     result[1].add nnkOfBranch.newTree(newIdentNode("Status" & n.strVal), nnkRaiseStmt.newTree(
       newCall(bindSym"newException", n,
       getAst(statusToString(statusVal)))))
-  result[1].add nnkElse.newTree(newCall(bindSym"assert", newLit(false),
-    getAst(statusToString(statusVal))))
+  result[1].add nnkElse.newTree(nnkDiscardStmt.newTree(newEmptyNode()))
 
 include "cairo_cheader.nim"
 
@@ -124,6 +123,7 @@ proc `=destroy`(rectangleList: var RectangleList) =
   if rectangleList.impl != nil:
     cairo_rectangle_list_destroy(rectangleList.impl)
     rectangleList.impl = nil
+# no copy rectanglelist function in cairo
 proc `=`(rectangleList: var RectangleList; original: RectangleList) {.error.}
 
 proc `=destroy`(options: var FontOptions) =
@@ -205,33 +205,33 @@ proc setOperator*(cr: Context, op: Operator) =
   cairo_set_operator(cr.impl, op)
 proc setSource*(cr: Context, source: Pattern) =
   cairo_set_source(cr.impl, source.impl)
-proc setSourceRgb*(cr: Context, red, green, blue: float64) =
+proc setSourceRgb*(cr: Context, red, green, blue: float) =
   cairo_set_source_rgb(cr.impl, red, green, blue)
-proc setSourceRgba*(cr: Context, red, green, blue, alpha: float64) =
+proc setSourceRgba*(cr: Context, red, green, blue, alpha: float) =
   cairo_set_source_rgba(cr.impl, red, green, blue, alpha)
-proc setSource*(cr: Context, surface: Surface, x, y: float64) =
+proc setSource*(cr: Context, surface: Surface, x, y: float) =
   cairo_set_source_surface(cr.impl, surface.impl, x, y)
-proc setTolerance*(cr: Context, tolerance: float64) =
+proc setTolerance*(cr: Context, tolerance: float) =
   cairo_set_tolerance(cr.impl, tolerance)
 proc setAntialias*(cr: Context, antialias: Antialias) =
   cairo_set_antialias(cr.impl, antialias)
 proc setFillRule*(cr: Context, fillRule: FillRule) =
   cairo_set_fill_rule(cr.impl, fillRule)
-proc setLineWidth*(cr: Context, width: float64) =
+proc setLineWidth*(cr: Context, width: float) =
   cairo_set_line_width(cr.impl, width)
 proc setLineCap*(cr: Context, lineCap: LineCap) =
   cairo_set_line_cap(cr.impl, lineCap)
 proc setLineJoin*(cr: Context, lineJoin: LineJoin) =
   cairo_set_line_join(cr.impl, lineJoin)
-proc setDash*(cr: Context, dashes: openarray[float64], offset: float64) =
+proc setDash*(cr: Context, dashes: openarray[float], offset: float) =
   cairo_set_dash(cr.impl, dashes, offset)
-proc setMiterLimit*(cr: Context, limit: float64) =
+proc setMiterLimit*(cr: Context, limit: float) =
   cairo_set_miter_limit(cr.impl, limit)
-proc translate*(cr: Context, tx, ty: float64) =
+proc translate*(cr: Context, tx, ty: float) =
   cairo_translate(cr.impl, tx, ty)
-proc scale*(cr: Context, sx, sy: float64) =
+proc scale*(cr: Context, sx, sy: float) =
   cairo_scale(cr.impl, sx, sy)
-proc rotate*(cr: Context, angle: float64) =
+proc rotate*(cr: Context, angle: float) =
   cairo_rotate(cr.impl, angle)
 proc transform*(cr: Context, matrix: Matrix) =
   cairo_transform(cr.impl, matrix)
@@ -239,47 +239,47 @@ proc setMatrix*(cr: Context, matrix: Matrix) =
   cairo_set_matrix(cr.impl, matrix)
 proc identityMatrix*(cr: Context) =
   cairo_identity_matrix(cr.impl)
-proc userToDevice*(cr: Context, x, y: var float64) =
+proc userToDevice*(cr: Context, x, y: var float) =
   cairo_user_to_device(cr.impl, x, y)
-proc userToDeviceDistance*(cr: Context, dx, dy: var float64) =
+proc userToDeviceDistance*(cr: Context, dx, dy: var float) =
   cairo_user_to_device_distance(cr.impl, dx, dy)
-proc deviceToUser*(cr: Context, x, y: var float64) =
+proc deviceToUser*(cr: Context, x, y: var float) =
   cairo_device_to_user(cr.impl, x, y)
-proc deviceToUserDistance*(cr: Context, dx, dy: var float64) =
+proc deviceToUserDistance*(cr: Context, dx, dy: var float) =
   cairo_device_to_user_distance(cr.impl, dx, dy)
 # Path creation functions
 proc newPath*(cr: Context) =
   cairo_new_path(cr.impl)
-proc moveTo*(cr: Context, x, y: float64) =
+proc moveTo*(cr: Context, x, y: float) =
   cairo_move_to(cr.impl, x, y)
 proc newSubPath*(cr: Context) =
   cairo_new_sub_path(cr.impl)
-proc lineTo*(cr: Context, x, y: float64) =
+proc lineTo*(cr: Context, x, y: float) =
   cairo_line_to(cr.impl, x, y)
-proc curveTo*(cr: Context, x1, y1, x2, y2, x3, y3: float64) =
+proc curveTo*(cr: Context, x1, y1, x2, y2, x3, y3: float) =
   cairo_curve_to(cr.impl, x1, y1, x2, y2, x3, y3)
-proc arc*(cr: Context, xc, yc, radius, angle1, angle2: float64) =
+proc arc*(cr: Context, xc, yc, radius, angle1, angle2: float) =
   cairo_arc(cr.impl, xc, yc, radius, angle1, angle2)
-proc arcNegative*(cr: Context, xc, yc, radius, angle1, angle2: float64) =
+proc arcNegative*(cr: Context, xc, yc, radius, angle1, angle2: float) =
   cairo_arc_negative(cr.impl, xc, yc, radius, angle1, angle2)
-proc relMoveTo*(cr: Context, dx, dy: float64) =
+proc relMoveTo*(cr: Context, dx, dy: float) =
   cairo_rel_move_to(cr.impl, dx, dy)
-proc relLineTo*(cr: Context, dx, dy: float64) =
+proc relLineTo*(cr: Context, dx, dy: float) =
   cairo_rel_line_to(cr.impl, dx, dy)
-proc relCurveTo*(cr: Context, dx1, dy1, dx2, dy2, dx3, dy3: float64) =
+proc relCurveTo*(cr: Context, dx1, dy1, dx2, dy2, dx3, dy3: float) =
   cairo_rel_curve_to(cr.impl, dx1, dy1, dx2, dy2, dx3, dy3)
-proc rectangle*(cr: Context, x, y, width, height: float64) =
+proc rectangle*(cr: Context, x, y, width, height: float) =
   cairo_rectangle(cr.impl, x, y, width, height)
 proc closePath*(cr: Context) =
   cairo_close_path(cr.impl)
 # Painting functions
 proc paint*(cr: Context) =
   cairo_paint(cr.impl)
-proc paintWithAlpha*(cr: Context, alpha: float64) =
+proc paintWithAlpha*(cr: Context, alpha: float) =
   cairo_paint_with_alpha(cr.impl, alpha)
 proc mask*(cr: Context, pattern: Pattern) =
   cairo_mask(cr.impl, pattern.impl)
-proc mask*(cr: Context, surface: Surface, surfaceX, surfaceY: float64) =
+proc mask*(cr: Context, surface: Surface, surfaceX, surfaceY: float) =
   cairo_mask_surface(cr.impl, surface.impl, surfaceX, surfaceY)
 proc stroke*(cr: Context) =
   cairo_stroke(cr.impl)
@@ -294,14 +294,14 @@ proc copyPage*(cr: Context) =
 proc showPage*(cr: Context) =
   cairo_show_page(cr.impl)
 # Insideness testing
-proc inStroke*(cr: Context, x, y: float64): bool =
+proc inStroke*(cr: Context, x, y: float): bool =
   cairo_in_stroke(cr.impl, x, y) == 1'i32
-proc inFill*(cr: Context, x, y: float64): bool =
+proc inFill*(cr: Context, x, y: float): bool =
   cairo_in_fill(cr.impl, x, y) == 1'i32
 # Rectangular extents
-proc strokeExtents*(cr: Context, x1, y1, x2, y2: var float64) =
+proc strokeExtents*(cr: Context, x1, y1, x2, y2: var float) =
   cairo_stroke_extents(cr.impl, x1, y1, x2, y2)
-proc fillExtents*(cr: Context, x1, y1, x2, y2: var float64) =
+proc fillExtents*(cr: Context, x1, y1, x2, y2: var float) =
   cairo_fill_extents(cr.impl, x1, y1, x2, y2)
 # Clipping
 proc resetClip*(cr: Context) =
@@ -310,7 +310,7 @@ proc clip*(cr: Context) =
   cairo_clip(cr.impl)
 proc clipPreserve*(cr: Context) =
   cairo_clip_preserve(cr.impl)
-proc clipExtents*(cr: Context, x1, y1, x2, y2: var float64) =
+proc clipExtents*(cr: Context, x1, y1, x2, y2: var float) =
   cairo_clip_extents(cr.impl, x1, y1, x2, y2)
 proc copyClipRectangleList*(cr: Context): RectangleList =
   result = RectangleList(impl: cairo_copy_clip_rectangle_list(cr.impl))
@@ -343,7 +343,7 @@ proc getHintMetrics*(options: FontOptions): HintMetrics =
   #   font object inside the the TCairo.
 proc selectFontFace*(cr: Context, family: string, slant: FontSlant, weight: FontWeight) =
   cairo_select_font_face(cr.impl, family, slant, weight)
-proc setFontSize*(cr: Context, size: float64) =
+proc setFontSize*(cr: Context, size: float) =
   cairo_set_font_size(cr.impl, size)
 proc setFontMatrix*(cr: Context, matrix: Matrix) =
   cairo_set_font_matrix(cr.impl, matrix)
@@ -364,18 +364,18 @@ proc getScaledFont*(cr: Context): ScaledFont =
   result = ScaledFont(impl: cairo_get_scaled_font(cr.impl))
 proc showText*(cr: Context, utf8: string) =
   cairo_show_text(cr.impl, utf8)
-proc showGlyphs*(cr: Context, glyphs: Glyph, numGlyphs: int) =
-  cairo_show_glyphs(cr.impl, glyphs, numGlyphs.int32)
+proc showGlyphs*(cr: Context, glyphs: openarray[Glyph]) =
+  cairo_show_glyphs(cr.impl, glyphs)
 proc textPath*(cr: Context, utf8: string) =
   cairo_text_path(cr.impl, utf8)
-proc glyphPath*(cr: Context, glyphs: Glyph, numGlyphs: int) =
-  cairo_glyph_path(cr.impl, glyphs, numGlyphs.int32)
-proc textExtents*(cr: Context, utf8: string, extents: var TextExtents) =
-  cairo_text_extents(cr.impl, utf8, extents)
-proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int, extents: var TextExtents) =
-  cairo_glyph_extents(cr.impl, glyphs, numGlyphs.int32, extents)
-proc fontExtents*(cr: Context, extents: var FontExtents) =
-  cairo_font_extents(cr.impl, extents)
+proc glyphPath*(cr: Context, glyphs: openarray[Glyph]) =
+  cairo_glyph_path(cr.impl, glyphs)
+proc textExtents*(cr: Context, utf8: string): TextExtents =
+  cairo_text_extents(cr.impl, utf8, result)
+proc glyphExtents*(cr: Context, glyphs: openarray[Glyph]): TextExtents =
+  cairo_glyph_extents(cr.impl, glyphs, result)
+proc fontExtents*(cr: Context): FontExtents =
+  cairo_font_extents(cr.impl, result)
 # Generic identifier for a font style
 proc getType*(fontFace: FontFace): FontType =
   cairo_font_face_get_type(fontFace.impl)
@@ -392,12 +392,12 @@ proc getUserData*(scaledFont: ScaledFont, key: UserDataKey): pointer =
   cairo_scaled_font_get_user_data(scaledFont.impl, key)
 proc setUserData*(scaledFont: ScaledFont, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
   checkStatus cairo_scaled_font_set_user_data(scaledFont.impl, key, userData, destroy), [NoMemory]
-proc extents*(scaledFont: ScaledFont, extents: var FontExtents) =
-  cairo_scaled_font_extents(scaledFont.impl, extents)
-proc textExtents*(scaledFont: ScaledFont, utf8: string, extents: var TextExtents) =
-  cairo_scaled_font_text_extents(scaledFont.impl, utf8, extents)
-proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int, extents: var TextExtents) =
-  cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs.int32, extents)
+proc extents*(scaledFont: ScaledFont): FontExtents =
+  cairo_scaled_font_extents(scaledFont.impl, result)
+proc textExtents*(scaledFont: ScaledFont, utf8: string): TextExtents =
+  cairo_scaled_font_text_extents(scaledFont.impl, utf8, result)
+proc glyphExtents*(scaledFont: ScaledFont, glyphs: openarray[Glyph]): TextExtents =
+  cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, result)
 proc getFontFace*(scaledFont: ScaledFont): FontFace =
   result = FontFace(impl: cairo_scaled_font_get_font_face(scaledFont.impl))
 proc getFontMatrix*(scaledFont: ScaledFont): Matrix =
@@ -412,27 +412,29 @@ proc getOperator*(cr: Context): Operator =
   cairo_get_operator(cr.impl)
 proc getSource*(cr: Context): Pattern =
   result = Pattern(impl: cairo_get_source(cr.impl))
-proc getTolerance*(cr: Context): float64 =
+proc getTolerance*(cr: Context): float =
   cairo_get_tolerance(cr.impl)
 proc getAntialias*(cr: Context): Antialias =
   cairo_get_antialias(cr.impl)
-proc getCurrentPoint*(cr: Context, x, y: var float64) =
+proc getCurrentPoint*(cr: Context, x, y: var float) =
   cairo_get_current_point(cr.impl, x, y)
 proc getFillRule*(cr: Context): FillRule =
   cairo_get_fill_rule(cr.impl)
-proc getLineWidth*(cr: Context): float64 =
+proc getLineWidth*(cr: Context): float =
   cairo_get_line_width(cr.impl)
 proc getLineCap*(cr: Context): LineCap =
   cairo_get_line_cap(cr.impl)
 proc getLineJoin*(cr: Context): LineJoin =
   cairo_get_line_join(cr.impl)
-proc getMiterLimit*(cr: Context): float64 =
+proc getMiterLimit*(cr: Context): float =
   cairo_get_miter_limit(cr.impl)
 proc getDashCount*(cr: Context): int =
   cairo_get_dash_count(cr.impl)
-proc getDash*(cr: Context, offset: var float64): seq[float64] =
-  result = newSeq[float64](getDashCount(cr))
-  cairo_get_dash(cr.impl, result[0].addr, offset)
+proc getDash*(cr: Context): (seq[float], float) =
+  var offset = 0.0
+  var dashes = newSeq[float](getDashCount(cr))
+  cairo_get_dash(cr.impl, dashes[0].addr, offset)
+  result = (dashes, offset)
 proc getMatrix*(cr: Context): Matrix =
   cairo_get_matrix(cr.impl, result)
 proc getTarget*(cr: Context): Surface =
@@ -469,11 +471,11 @@ proc markDirty*(surface: Surface) =
   cairo_surface_mark_dirty(surface.impl)
 proc markDirtyRectangle*(surface: Surface, x, y, width, height: int) =
   cairo_surface_mark_dirty_rectangle(surface.impl, x.int32, y.int32, width.int32, height.int32)
-proc setDeviceOffset*(surface: Surface, xOffset, yOffset: float64) =
+proc setDeviceOffset*(surface: Surface, xOffset, yOffset: float) =
   cairo_surface_set_device_offset(surface.impl, xOffset, yOffset)
-proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float64) =
+proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float) =
   cairo_surface_get_device_offset(surface.impl, xOffset, yOffset)
-proc setFallbackResolution*(surface: Surface, xPixelsPerInch, yPixelsPerInch: float64) =
+proc setFallbackResolution*(surface: Surface, xPixelsPerInch, yPixelsPerInch: float) =
   cairo_surface_set_fallback_resolution(surface.impl, xPixelsPerInch, yPixelsPerInch)
 # Image-surface functions
 proc imageSurfaceCreate*(format: Format, width, height: int): Surface =
@@ -495,15 +497,15 @@ proc imageSurfaceCreateFromPng*(filename: string): Surface =
 proc imageSurfaceCreateFromPng*(readFunc: ReadFunc, closure: pointer): Surface =
   result = Surface(impl: cairo_image_surface_create_from_png_stream(readFunc, closure))
 # Pattern creation functions
-proc patternCreateRgb*(red, green, blue: float64): Pattern =
+proc patternCreateRgb*(red, green, blue: float): Pattern =
   result = Pattern(impl: cairo_pattern_create_rgb(red, green, blue))
-proc patternCreateRgba*(red, green, blue, alpha: float64): Pattern =
+proc patternCreateRgba*(red, green, blue, alpha: float): Pattern =
   result = Pattern(impl: cairo_pattern_create_rgba(red, green, blue, alpha))
 proc patternCreateForSurface*(surface: Surface): Pattern =
   result = Pattern(impl: cairo_pattern_create_for_surface(surface.impl))
-proc patternCreateLinear*(x0, y0, x1, y1: float64): Pattern =
+proc patternCreateLinear*(x0, y0, x1, y1: float): Pattern =
   result = Pattern(impl: cairo_pattern_create_linear(x0, y0, x1, y1))
-proc patternCreateRadial*(cx0, cy0, radius0, cx1, cy1, radius1: float64): Pattern =
+proc patternCreateRadial*(cx0, cy0, radius0, cx1, cy1, radius1: float): Pattern =
   result = Pattern(impl: cairo_pattern_create_radial(cx0, cy0, radius0, cx1, cy1, radius1))
 proc getUserData*(pattern: Pattern, key: UserDataKey): pointer =
   cairo_pattern_get_user_data(pattern.impl, key)
@@ -511,9 +513,9 @@ proc setUserData*(pattern: Pattern, key: UserDataKey, userData: pointer, destroy
   checkStatus cairo_pattern_set_user_data(pattern.impl, key, userData, destroy), [NoMemory]
 proc getType*(pattern: Pattern): PatternType =
   cairo_pattern_get_type(pattern.impl)
-proc addColorStopRgb*(pattern: Pattern, offset, red, green, blue: float64) =
+proc addColorStopRgb*(pattern: Pattern, offset, red, green, blue: float) =
   cairo_pattern_add_color_stop_rgb(pattern.impl, offset, red, green, blue)
-proc addColorStopRgba*(pattern: Pattern, offset, red, green, blue, alpha: float64) =
+proc addColorStopRgba*(pattern: Pattern, offset, red, green, blue, alpha: float) =
   cairo_pattern_add_color_stop_rgba(pattern.impl, offset, red, green, blue, alpha)
 proc setMatrix*(pattern: Pattern, matrix: Matrix) =
   cairo_pattern_set_matrix(pattern.impl, matrix)
@@ -527,58 +529,58 @@ proc setFilter*(pattern: Pattern, filter: Filter) =
   cairo_pattern_set_filter(pattern.impl, filter)
 proc getFilter*(pattern: Pattern): Filter =
   cairo_pattern_get_filter(pattern.impl)
-proc getRgba*(pattern: Pattern, red, green, blue, alpha: var float64) =
+proc getRgba*(pattern: Pattern, red, green, blue, alpha: var float) =
   checkStatus cairo_pattern_get_rgba(pattern.impl, red, green, blue, alpha), [PatternTypeMismatch]
 proc getSurface*(pattern: Pattern, surface: Surface) =
   checkStatus cairo_pattern_get_surface(pattern.impl, surface.impl), [PatternTypeMismatch]
-proc getColorStopRgba*(pattern: Pattern, index: int, offset, red, green, blue, alpha: var float64) =
+proc getColorStopRgba*(pattern: Pattern, index: int, offset, red, green, blue, alpha: var float) =
   checkStatus cairo_pattern_get_color_stop_rgba(pattern.impl, index.int32, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
 proc getColorStopCount*(pattern: Pattern): int =
   var count: int32
   checkStatus cairo_pattern_get_color_stop_count(pattern.impl, count), [PatternTypeMismatch]
   result = count
-proc getLinearPoints*(pattern: Pattern, x0, y0, x1, y1: var float64) =
+proc getLinearPoints*(pattern: Pattern, x0, y0, x1, y1: var float) =
   checkStatus cairo_pattern_get_linear_points(pattern.impl, x0, y0, x1, y1), [PatternTypeMismatch]
-proc getRadialCircles*(pattern: Pattern, x0, y0, r0, x1, y1, r1: var float64) =
+proc getRadialCircles*(pattern: Pattern, x0, y0, r0, x1, y1, r1: var float) =
   checkStatus cairo_pattern_get_radial_circles(pattern.impl, x0, y0, r0, x1, y1, r1), [PatternTypeMismatch]
 # Matrix functions
-proc initMatrix*(xx, yx, xy, yy, x0, y0: float64): Matrix =
+proc initMatrix*(xx, yx, xy, yy, x0, y0: float): Matrix =
   cairo_matrix_init(result, xx, yx, xy, yy, x0, y0)
 proc initIdentity*(): Matrix =
   cairo_matrix_init_identity(result)
-proc initTranslate*(tx, ty: float64): Matrix =
+proc initTranslate*(tx, ty: float): Matrix =
   cairo_matrix_init_translate(result, tx, ty)
-proc initScale*(sx, sy: float64): Matrix =
+proc initScale*(sx, sy: float): Matrix =
   cairo_matrix_init_scale(result, sx, sy)
-proc initRotate*(radians: float64): Matrix =
+proc initRotate*(radians: float): Matrix =
   cairo_matrix_init_rotate(result, radians)
-proc translate*(matrix: var Matrix, tx, ty: float64) =
+proc translate*(matrix: var Matrix, tx, ty: float) =
   cairo_matrix_translate(matrix, tx, ty)
-proc scale*(matrix: var Matrix, sx, sy: float64) =
+proc scale*(matrix: var Matrix, sx, sy: float) =
   cairo_matrix_scale(matrix, sx, sy)
-proc rotate*(matrix: var Matrix, radians: float64) =
+proc rotate*(matrix: var Matrix, radians: float) =
   cairo_matrix_rotate(matrix, radians)
 proc invert*(matrix: var Matrix) =
   checkStatus cairo_matrix_invert(matrix), [InvalidMatrix]
 proc multiply*(a, b: Matrix): Matrix =
   cairo_matrix_multiply(result, a, b)
-proc transformDistance*(matrix: Matrix, dx, dy: var float64) =
+proc transformDistance*(matrix: Matrix, dx, dy: var float) =
   cairo_matrix_transform_distance(matrix, dx, dy)
-proc transformPoint*(matrix: Matrix, x, y: var float64) =
+proc transformPoint*(matrix: Matrix, x, y: var float) =
   cairo_matrix_transform_point(matrix, x, y)
 # PDF functions
-proc pdfSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float64): Surface =
+proc pdfSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_pdf_surface_create(filename, widthInPoints, heightInPoints))
-proc pdfSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+proc pdfSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_pdf_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints))
-proc pdfSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float64) =
+proc pdfSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float) =
   cairo_pdf_surface_set_size(surface.impl, widthInPoints, heightInPoints)
 # PS functions
-proc psSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float64): Surface =
+proc psSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_ps_surface_create(filename, widthInPoints, heightInPoints))
-proc psSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+proc psSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_ps_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints))
-proc psSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float64) =
+proc psSurfaceSetSize*(surface: Surface, widthInPoints, heightInPoints: float) =
   cairo_ps_surface_set_size(surface.impl, widthInPoints, heightInPoints)
 proc psSurfaceDscComment*(surface: Surface, comment: string) =
   cairo_ps_surface_dsc_comment(surface.impl, comment)
@@ -587,9 +589,9 @@ proc psSurfaceDscBeginSetup*(surface: Surface) =
 proc psSurfaceDscBeginPageSetup*(surface: Surface) =
   cairo_ps_surface_dsc_begin_page_setup(surface.impl)
 # SVG functions
-proc svgSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float64): Surface =
+proc svgSurfaceCreate*(filename: string, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_svg_surface_create(filename, widthInPoints, heightInPoints))
-proc svgSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float64): Surface =
+proc svgSurfaceCreateForStream*(writeFunc: WriteFunc, closure: pointer, widthInPoints, heightInPoints: float): Surface =
   result = Surface(impl: cairo_svg_surface_create_for_stream(writeFunc, closure, widthInPoints, heightInPoints))
 proc svgSurfaceRestrictToVersion*(surface: Surface, version: SvgVersion) =
   cairo_svg_surface_restrict_to_version(surface.impl, version)
@@ -601,7 +603,7 @@ proc svgVersionToString*(version: SvgVersion): string =
 proc debugResetStaticData*() =
   cairo_debug_reset_static_data()
 # new since 1.10
-proc surfaceCreateForRectangle*(target: Surface, x, y, w, h: float64): Surface =
+proc surfaceCreateForRectangle*(target: Surface, x, y, w, h: float): Surface =
   result = Surface(impl: cairo_surface_create_for_rectangle(target.impl, x, y, w, h))
 
 iterator items*(path: Path): PathSegment =

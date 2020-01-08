@@ -264,11 +264,11 @@ proc cairo_get_font_face(cr: PContext): PFontFace
 proc cairo_set_scaled_font(cr: PContext, scaled_font: PScaledFont)
 proc cairo_get_scaled_font(cr: PContext): PScaledFont
 proc cairo_show_text(cr: PContext, utf8: cstring)
-proc cairo_show_glyphs(cr: PContext, glyphs: Glyph, num_glyphs: int32)
+proc cairo_show_glyphs(cr: PContext, glyphs: openarray[Glyph])
 proc cairo_text_path(cr: PContext, utf8: cstring)
-proc cairo_glyph_path(cr: PContext, glyphs: Glyph, num_glyphs: int32)
+proc cairo_glyph_path(cr: PContext, glyphs: openarray[Glyph])
 proc cairo_text_extents(cr: PContext, utf8: cstring, extents: var TextExtents)
-proc cairo_glyph_extents(cr: PContext, glyphs: Glyph, num_glyphs: int32, extents: var TextExtents)
+proc cairo_glyph_extents(cr: PContext, glyphs: openarray[Glyph], extents: var TextExtents)
 proc cairo_font_extents(cr: PContext, extents: var FontExtents)
 # Generic identifier for a font style
 proc cairo_font_face_reference(font_face: PFontFace): PFontFace
@@ -289,7 +289,7 @@ proc cairo_scaled_font_get_user_data(scaled_font: PScaledFont, key: UserDataKey)
 proc cairo_scaled_font_set_user_data(scaled_font: PScaledFont, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
 proc cairo_scaled_font_extents(scaled_font: PScaledFont, extents: var FontExtents)
 proc cairo_scaled_font_text_extents(scaled_font: PScaledFont, utf8: cstring, extents: var TextExtents)
-proc cairo_scaled_font_glyph_extents(scaled_font: PScaledFont, glyphs: Glyph, num_glyphs: int32, extents: var TextExtents)
+proc cairo_scaled_font_glyph_extents(scaled_font: PScaledFont, glyphs: openarray[Glyph], extents: var TextExtents)
 proc cairo_scaled_font_get_font_face(scaled_font: PScaledFont): PFontFace
 proc cairo_scaled_font_get_font_matrix(scaled_font: PScaledFont, font_matrix: var Matrix)
 proc cairo_scaled_font_get_ctm(scaled_font: PScaledFont, ctm: var Matrix)
