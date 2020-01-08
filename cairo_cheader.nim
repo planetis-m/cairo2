@@ -93,12 +93,7 @@ type
   DestroyFunc* = proc (data: pointer) {.cdecl.}
   WriteFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
   ReadFunc* = proc (closure: pointer, data: cstring, len: int32): Status {.cdecl.}
-  TContext = object
-  TSurface = object
-  TPattern = object
-  TScaledFont = object
-  TFontFace = object
-  TFontOptions = object
+
   Matrix* {.byref.} = object
     xx*: float64
     yx*: float64
@@ -110,12 +105,12 @@ type
   UserDataKey* {.byref.} = object
     unused*: int32
 
-  TGlyph* {.byref.} = object
+  Glyph* {.byref.} = object
     index*: int32
     x*: float64
     y*: float64
 
-  TTextExtents* {.byref.} = object
+  TextExtents* {.byref.} = object
     xBearing* {.importc: "x_bearing".}: float64
     yBearing* {.importc: "y_bearing".}: float64
     width*: float64
@@ -123,7 +118,7 @@ type
     xAdvance* {.importc: "x_advance".}: float64
     yAdvance* {.importc: "y_advance".}: float64
 
-  TFontExtents* {.byref.} = object
+  FontExtents* {.byref.} = object
     ascent*: float64
     descent*: float64
     height*: float64
@@ -142,32 +137,27 @@ type
     header: Header
     point: Point
 
-  TPath* = object
-    status*: Status
-    data*: ptr UncheckedArray[TPathData]
-    numData* {.importc: "num_data".}: int32
+  TPath = object
+    status: Status
+    data: ptr UncheckedArray[TPathData]
+    numData {.importc: "num_data".}: int32
 
-  Rectangle* {.byref.} = object
+  Rectangle* = object
     x*, y*, width*, height*: float64
 
-  TRectangleList* = object
-    status*: Status
-    rectangles*: ptr UncheckedArray[Rectangle]
-    numRectangles* {.importc: "num_rectangles".}: int32
+  TRectangleList = object
+    status: Status
+    rectangles: ptr UncheckedArray[Rectangle]
+    numRectangles {.importc: "num_rectangles".}: int32
 
-  PContext = ptr TContext
-  PSurface = ptr TSurface
-  PPattern = ptr TPattern
-  PScaledFont = ptr TScaledFont
-  PFontFace = ptr TFontFace
-  PFontOptions = ptr TFontOptions
-  PMatrix = ptr Matrix
-  PUserDataKey = ptr UserDataKey
-  PGlyph* = ptr TGlyph
-  PTextExtents* = ptr TTextExtents
-  PFontExtents* = ptr TFontExtents
-  PPath* = ptr TPath
-  PRectangleList* = ptr TRectangleList
+  PContext = ptr object
+  PSurface = ptr object
+  PPattern = ptr object
+  PScaledFont = ptr object
+  PFontFace = ptr object
+  PFontOptions = ptr object
+  PPath = ptr TPath
+  PRectangleList = ptr TRectangleList
 
 {.push dynlib: LibCairo, importc, cdecl.}
 proc cairo_version(): int32
@@ -274,12 +264,12 @@ proc cairo_get_font_face(cr: PContext): PFontFace
 proc cairo_set_scaled_font(cr: PContext, scaled_font: PScaledFont)
 proc cairo_get_scaled_font(cr: PContext): PScaledFont
 proc cairo_show_text(cr: PContext, utf8: cstring)
-proc cairo_show_glyphs(cr: PContext, glyphs: PGlyph, num_glyphs: int32)
+proc cairo_show_glyphs(cr: PContext, glyphs: Glyph, num_glyphs: int32)
 proc cairo_text_path(cr: PContext, utf8: cstring)
-proc cairo_glyph_path(cr: PContext, glyphs: PGlyph, num_glyphs: int32)
-proc cairo_text_extents(cr: PContext, utf8: cstring, extents: PTextExtents)
-proc cairo_glyph_extents(cr: PContext, glyphs: PGlyph, num_glyphs: int32, extents: PTextExtents)
-proc cairo_font_extents(cr: PContext, extents: PFontExtents)
+proc cairo_glyph_path(cr: PContext, glyphs: Glyph, num_glyphs: int32)
+proc cairo_text_extents(cr: PContext, utf8: cstring, extents: var TextExtents)
+proc cairo_glyph_extents(cr: PContext, glyphs: Glyph, num_glyphs: int32, extents: var TextExtents)
+proc cairo_font_extents(cr: PContext, extents: var FontExtents)
 # Generic identifier for a font style
 proc cairo_font_face_reference(font_face: PFontFace): PFontFace
 proc cairo_font_face_destroy(font_face: PFontFace)
@@ -297,9 +287,9 @@ proc cairo_scaled_font_status(scaled_font: PScaledFont): Status
 proc cairo_scaled_font_get_type(scaled_font: PScaledFont): FontType
 proc cairo_scaled_font_get_user_data(scaled_font: PScaledFont, key: UserDataKey): pointer
 proc cairo_scaled_font_set_user_data(scaled_font: PScaledFont, key: UserDataKey, user_data: pointer, destroy: DestroyFunc): Status
-proc cairo_scaled_font_extents(scaled_font: PScaledFont, extents: PFontExtents)
-proc cairo_scaled_font_text_extents(scaled_font: PScaledFont, utf8: cstring, extents: PTextExtents)
-proc cairo_scaled_font_glyph_extents(scaled_font: PScaledFont, glyphs: PGlyph, num_glyphs: int32, extents: PTextExtents)
+proc cairo_scaled_font_extents(scaled_font: PScaledFont, extents: var FontExtents)
+proc cairo_scaled_font_text_extents(scaled_font: PScaledFont, utf8: cstring, extents: var TextExtents)
+proc cairo_scaled_font_glyph_extents(scaled_font: PScaledFont, glyphs: Glyph, num_glyphs: int32, extents: var TextExtents)
 proc cairo_scaled_font_get_font_face(scaled_font: PScaledFont): PFontFace
 proc cairo_scaled_font_get_font_matrix(scaled_font: PScaledFont, font_matrix: var Matrix)
 proc cairo_scaled_font_get_ctm(scaled_font: PScaledFont, ctm: var Matrix)

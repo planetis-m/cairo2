@@ -87,6 +87,8 @@ include "cairo_cheader.nim"
 type
   Context* = object
     impl: PContext
+  RectangleList* = object
+    impl: PRectangleList
   FontOptions* = object
     impl: PFontOptions
   FontFace* = object
@@ -118,6 +120,12 @@ proc `=`(cr: var Context; original: Context) =
   if cr.impl != nil: cairo_destroy(cr.impl)
   cr.impl = cairo_reference(original.impl)
 
+proc `=destroy`(rectangleList: var RectangleList) =
+  if rectangleList.impl != nil:
+    cairo_rectangle_list_destroy(rectangleList.impl)
+    rectangleList.impl = nil
+proc `=`(rectangleList: var RectangleList; original: RectangleList) {.error.}
+
 proc `=destroy`(options: var FontOptions) =
   if options.impl != nil:
     cairo_font_options_destroy(options.impl)
@@ -132,16 +140,16 @@ proc `=destroy`(fontFace: var FontFace) =
     cairo_font_face_destroy(fontFace.impl)
     fontFace.impl = nil
 proc `=`(fontFace: var FontFace; original: FontFace) =
-  if fontFace.impl != nil: cairo_destroy(fontFace.impl)
-  fontFace.impl = cairo_reference(original.impl)
+  if fontFace.impl != nil: cairo_font_face_destroy(fontFace.impl)
+  fontFace.impl = cairo_font_face_reference(original.impl)
 
 proc `=destroy`(scaledFont: var ScaledFont) =
   if scaledFont.impl != nil:
     cairo_scaled_font_destroy(scaledFont.impl)
     scaledFont.impl = nil
 proc `=`(scaledFont: var ScaledFont; original: ScaledFont) =
-  if scaledFont.impl != nil: cairo_destroy(scaledFont.impl)
-  scaledFont.impl = cairo_reference(original.impl)
+  if scaledFont.impl != nil: cairo_scaled_font_destroy(scaledFont.impl)
+  scaledFont.impl = cairo_scaled_font_reference(original.impl)
 
 proc `=destroy`(path: var Path) =
   if path.impl != nil:
@@ -162,8 +170,8 @@ proc `=destroy`(pattern: var Pattern) =
     cairo_pattern_destroy(pattern.impl)
     pattern.impl = nil
 proc `=`(pattern: var Pattern; original: Pattern) =
-  if pattern.impl != nil: cairo_surface_destroy(pattern.impl)
-  pattern.impl = cairo_surface_reference(original.impl)
+  if pattern.impl != nil: cairo_pattern_destroy(pattern.impl)
+  pattern.impl = cairo_pattern_reference(original.impl)
 
 proc version*(): int =
   cairo_version()
@@ -305,7 +313,7 @@ proc clipPreserve*(cr: Context) =
 proc clipExtents*(cr: Context, x1, y1, x2, y2: var float64) =
   cairo_clip_extents(cr.impl, x1, y1, x2, y2)
 proc copyClipRectangleList*(cr: Context): RectangleList =
-  cairo_copy_clip_rectangle_list(cr.impl)
+  result = RectangleList(impl: cairo_copy_clip_rectangle_list(cr.impl))
 # Font/Text functions
 proc fontOptionsCreate*(): FontOptions =
   result = FontOptions(impl: cairo_font_options_create())
@@ -362,11 +370,11 @@ proc textPath*(cr: Context, utf8: string) =
   cairo_text_path(cr.impl, utf8)
 proc glyphPath*(cr: Context, glyphs: Glyph, numGlyphs: int) =
   cairo_glyph_path(cr.impl, glyphs, numGlyphs.int32)
-proc textExtents*(cr: Context, utf8: string, extents: TextExtents) =
+proc textExtents*(cr: Context, utf8: string, extents: var TextExtents) =
   cairo_text_extents(cr.impl, utf8, extents)
-proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int, extents: TextExtents) =
+proc glyphExtents*(cr: Context, glyphs: Glyph, numGlyphs: int, extents: var TextExtents) =
   cairo_glyph_extents(cr.impl, glyphs, numGlyphs.int32, extents)
-proc fontExtents*(cr: Context, extents: FontExtents) =
+proc fontExtents*(cr: Context, extents: var FontExtents) =
   cairo_font_extents(cr.impl, extents)
 # Generic identifier for a font style
 proc getType*(fontFace: FontFace): FontType =
@@ -384,11 +392,11 @@ proc getUserData*(scaledFont: ScaledFont, key: UserDataKey): pointer =
   cairo_scaled_font_get_user_data(scaledFont.impl, key)
 proc setUserData*(scaledFont: ScaledFont, key: UserDataKey, userData: pointer, destroy: DestroyFunc) =
   checkStatus cairo_scaled_font_set_user_data(scaledFont.impl, key, userData, destroy), [NoMemory]
-proc extents*(scaledFont: ScaledFont, extents: FontExtents) =
+proc extents*(scaledFont: ScaledFont, extents: var FontExtents) =
   cairo_scaled_font_extents(scaledFont.impl, extents)
-proc textExtents*(scaledFont: ScaledFont, utf8: string, extents: TextExtents) =
+proc textExtents*(scaledFont: ScaledFont, utf8: string, extents: var TextExtents) =
   cairo_scaled_font_text_extents(scaledFont.impl, utf8, extents)
-proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int, extents: TextExtents) =
+proc glyphExtents*(scaledFont: ScaledFont, glyphs: Glyph, numGlyphs: int, extents: var TextExtents) =
   cairo_scaled_font_glyph_extents(scaledFont.impl, glyphs, numGlyphs.int32, extents)
 proc getFontFace*(scaledFont: ScaledFont): FontFace =
   result = FontFace(impl: cairo_scaled_font_get_font_face(scaledFont.impl))
@@ -439,7 +447,7 @@ proc appendPath*(cr: Context, path: Path) =
   cairo_append_path(cr.impl, path.impl)
 # Surface manipulation
 proc surfaceCreateSimilar*(other: Surface, content: Content, width, height: int): Surface =
-  result = Surface(impl: cairo_surface_create_similar(other, content, width.int32, height.int32))
+  result = Surface(impl: cairo_surface_create_similar(other.impl, content, width.int32, height.int32))
 proc getType*(surface: Surface): SurfaceType =
   cairo_surface_get_type(surface.impl)
 proc getContent*(surface: Surface): Content =
@@ -524,13 +532,15 @@ proc getRgba*(pattern: Pattern, red, green, blue, alpha: var float64) =
 proc getSurface*(pattern: Pattern, surface: Surface) =
   checkStatus cairo_pattern_get_surface(pattern.impl, surface.impl), [PatternTypeMismatch]
 proc getColorStopRgba*(pattern: Pattern, index: int, offset, red, green, blue, alpha: var float64) =
-  checkStatus cairo_pattern_get_color_stop_rgba(index.int32, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
+  checkStatus cairo_pattern_get_color_stop_rgba(pattern.impl, index.int32, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
 proc getColorStopCount*(pattern: Pattern): int =
-  checkStatus cairo_pattern_get_color_stop_count(pattern.impl, result.int32), [PatternTypeMismatch]
+  var count: int32
+  checkStatus cairo_pattern_get_color_stop_count(pattern.impl, count), [PatternTypeMismatch]
+  result = count
 proc getLinearPoints*(pattern: Pattern, x0, y0, x1, y1: var float64) =
   checkStatus cairo_pattern_get_linear_points(pattern.impl, x0, y0, x1, y1), [PatternTypeMismatch]
 proc getRadialCircles*(pattern: Pattern, x0, y0, r0, x1, y1, r1: var float64) =
-  checkStatus cairo_pattern_get_radial_circles(x0, y0, r0, x1, y1, r1), [PatternTypeMismatch]
+  checkStatus cairo_pattern_get_radial_circles(pattern.impl, x0, y0, r0, x1, y1, r1), [PatternTypeMismatch]
 # Matrix functions
 proc initMatrix*(xx, yx, xy, yy, x0, y0: float64): Matrix =
   cairo_matrix_init(result, xx, yx, xy, yy, x0, y0)
@@ -607,3 +617,7 @@ iterator items*(path: Path): PathSegment =
       of ClosePath: PathSegment(kind: ClosePath)
     i += path.impl.data[i].header.length
     yield res
+
+iterator items*(rectangleList: RectangleList): Rectangle =
+  for i in 0 ..< rectangleList.impl.numRectangles:
+    yield rectangleList.impl.rectangles[i]
