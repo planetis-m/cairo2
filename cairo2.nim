@@ -295,9 +295,9 @@ proc showPage*(cr: Context) =
   cairo_show_page(cr.impl)
 # Insideness testing
 proc inStroke*(cr: Context, x, y: float): bool =
-  cairo_in_stroke(cr.impl, x, y) == 1'i32
+  bool(cairo_in_stroke(cr.impl, x, y))
 proc inFill*(cr: Context, x, y: float): bool =
-  cairo_in_fill(cr.impl, x, y) == 1'i32
+  bool(cairo_in_fill(cr.impl, x, y))
 # Rectangular extents
 proc strokeExtents*(cr: Context): tuple[x1, y1, x2, y2: float] =
   cairo_stroke_extents(cr.impl, result.x1, result.y1, result.x2, result.y2)
@@ -320,7 +320,7 @@ proc fontOptionsCreate*(): FontOptions =
 proc merge*(options, other: FontOptions) =
   cairo_font_options_merge(options.impl, other.impl)
 proc equal*(options, other: FontOptions): bool =
-  cairo_font_options_equal(options.impl, other.impl) == 1'i32
+  bool(cairo_font_options_equal(options.impl, other.impl))
 proc hash*(options: FontOptions): Hash =
   result = Hash(cairo_font_options_hash(options.impl))
 proc setAntialias*(options: FontOptions, antialias: Antialias) =
@@ -529,7 +529,7 @@ proc setFilter*(pattern: Pattern, filter: Filter) =
   cairo_pattern_set_filter(pattern.impl, filter)
 proc getFilter*(pattern: Pattern): Filter =
   cairo_pattern_get_filter(pattern.impl)
-proc getRgba*(pattern: Pattern): tuple[red, green, blue, alpha: float =
+proc getRgba*(pattern: Pattern): tuple[red, green, blue, alpha: float] =
   checkStatus cairo_pattern_get_rgba(pattern.impl, result.red, result.green, result.blue, result.alpha), [PatternTypeMismatch]
 proc getSurface*(pattern: Pattern, surface: Surface) =
   checkStatus cairo_pattern_get_surface(pattern.impl, surface.impl), [PatternTypeMismatch]
@@ -541,7 +541,7 @@ proc getColorStopCount*(pattern: Pattern): int =
   result = count
 proc getLinearPoints*(pattern: Pattern): tuple[x0, y0, x1, y1: float] =
   checkStatus cairo_pattern_get_linear_points(pattern.impl, result.x0, result.y0, result.x1, result.y1), [PatternTypeMismatch]
-proc getRadialCircles*(pattern: Pattern): tuple[x0, y0, r0, x1, y1, r1: float =
+proc getRadialCircles*(pattern: Pattern): tuple[x0, y0, r0, x1, y1, r1: float] =
   checkStatus cairo_pattern_get_radial_circles(pattern.impl, result.x0, result.y0, result.r0, result.x1, result.y1, result.r1), [PatternTypeMismatch]
 # Matrix functions
 proc initMatrix*(xx, yx, xy, yy, x0, y0: float): Matrix =
