@@ -16,7 +16,7 @@ macro toCairoError(body: untyped): untyped =
   let enumVals = body[0][0][2]
   for i in 2 ..< enumVals.len: # skip StatusSuccess
     statusTy[0][2].add newIdentNode("Status" & enumVals[i].strVal)
-    result.add getAst(declSubty(newIdentNode("Cairo" & enumVals[i].strVal), errBasety))
+    result.add getAst(declSubty(enumVals[i], errBasety))
   result.add statusTy
 
 toCairoError:
@@ -77,7 +77,7 @@ macro checkStatus(expr, raises: untyped): untyped =
     nnkDiscardStmt.newTree(newEmptyNode()))
   for n in raises:
     result[1].add nnkOfBranch.newTree(newIdentNode("Status" & n.strVal), nnkRaiseStmt.newTree(
-      newCall(bindSym"newException", newIdentNode("Cairo" & n.strVal),
+      newCall(bindSym"newException", n,
       getAst(statusToString(statusVal)))))
   result[1].add nnkElse.newTree(newCall(bindSym"assert", newLit(false),
     getAst(statusToString(statusVal))))
@@ -93,6 +93,18 @@ type
     impl: PFontFace
   ScaledFont* = object
     impl: PScaledFont
+  Path* = object
+    impl: PPath
+  PathSegment* = object
+    case kind*: PathSegmentKind
+    of MoveTo:
+      moveTo*: Point
+    of LineTo:
+      lineTo*: Point
+    of CurveTo:
+      curveTo*: (Point, Point, Point)
+    of ClosePath:
+      discard
   Surface* = object
     impl: PSurface
   Pattern* = object
@@ -105,9 +117,6 @@ proc `=destroy`(cr: var Context) =
 proc `=`(cr: var Context; original: Context) =
   if cr.impl != nil: cairo_destroy(cr.impl)
   cr.impl = cairo_reference(original.impl)
-proc `=sink`(cr: var Context; original: Context) =
-  `=destroy`(cr)
-  cr.impl = original.impl
 
 proc `=destroy`(options: var FontOptions) =
   if options.impl != nil:
@@ -117,9 +126,6 @@ proc `=`(options: var FontOptions; original: FontOptions) =
   if options.impl != original.impl:
     `=destroy`(options)
     options.impl = cairo_font_options_copy(original.impl)
-proc `=sink`(options: var FontOptions; original: FontOptions) =
-  `=destroy`(options)
-  options.impl = original.impl
 
 proc `=destroy`(fontFace: var FontFace) =
   if fontFace.impl != nil:
@@ -128,9 +134,6 @@ proc `=destroy`(fontFace: var FontFace) =
 proc `=`(fontFace: var FontFace; original: FontFace) =
   if fontFace.impl != nil: cairo_destroy(fontFace.impl)
   fontFace.impl = cairo_reference(original.impl)
-proc `=sink`(fontFace: var FontFace; original: FontFace) =
-  `=destroy`(fontFace)
-  fontFace.impl = original.impl
 
 proc `=destroy`(scaledFont: var ScaledFont) =
   if scaledFont.impl != nil:
@@ -139,9 +142,12 @@ proc `=destroy`(scaledFont: var ScaledFont) =
 proc `=`(scaledFont: var ScaledFont; original: ScaledFont) =
   if scaledFont.impl != nil: cairo_destroy(scaledFont.impl)
   scaledFont.impl = cairo_reference(original.impl)
-proc `=sink`(scaledFont: var ScaledFont; original: ScaledFont) =
-  `=destroy`(scaledFont)
-  scaledFont.impl = original.impl
+
+proc `=destroy`(path: var Path) =
+  if path.impl != nil:
+    cairo_path_destroy(path.impl)
+    path.impl = nil
+proc `=`(path: var Path; original: Path) {.error.}
 
 proc `=destroy`(surface: var Surface) =
   if surface.impl != nil:
@@ -150,9 +156,6 @@ proc `=destroy`(surface: var Surface) =
 proc `=`(surface: var Surface; original: Surface) =
   if surface.impl != nil: cairo_surface_destroy(surface.impl)
   surface.impl = cairo_surface_reference(original.impl)
-proc `=sink`(surface: var Surface; original: Surface) =
-  `=destroy`(surface)
-  surface.impl = original.impl
 
 proc `=destroy`(pattern: var Pattern) =
   if pattern.impl != nil:
@@ -161,9 +164,6 @@ proc `=destroy`(pattern: var Pattern) =
 proc `=`(pattern: var Pattern; original: Pattern) =
   if pattern.impl != nil: cairo_surface_destroy(pattern.impl)
   pattern.impl = cairo_surface_reference(original.impl)
-proc `=sink`(pattern: var Pattern; original: Pattern) =
-  `=destroy`(pattern)
-  pattern.impl = original.impl
 
 proc version*(): int32 =
   cairo_version()
@@ -426,11 +426,11 @@ proc getTarget*(cr: Context): Surface =
 proc getGroupTarget*(cr: Context): Surface =
   result = Surface(impl: cairo_get_group_target(cr.impl))
 proc copyPath*(cr: Context): Path =
-  cairo_copy_path(cr.impl)
+  result = Path(impl: cairo_copy_path(cr.impl))
 proc copyPathFlat*(cr: Context): Path =
-  cairo_copy_path_flat(cr.impl)
+  result = Path(impl: cairo_copy_path_flat(cr.impl))
 proc appendPath*(cr: Context, path: Path) =
-  cairo_append_path(cr.impl, path)
+  cairo_append_path(cr.impl, path.impl)
 # Surface manipulation
 proc surfaceCreateSimilar*(other: Surface, content: Content, width, height: int32): Surface =
   result = Surface(impl: cairo_surface_create_similar(other, content, width, height))
@@ -594,3 +594,17 @@ proc version*(major, minor, micro: var int32) =
   major = version div 10000'i32
   minor = (version mod (major * 10000'i32)) div 100'i32
   micro = (version mod ((major * 10000'i32) + (minor * 100'i32)))
+
+iterator items*(path: Path): PathSegment =
+  var i = 0
+  while i < path.impl.numData:
+    let res = case path.impl.data[i].header.dataType
+      of MoveTo: PathSegment(kind: MoveTo, moveTo: path.impl.data[i + 1].point)
+      of LineTo: PathSegment(kind: LineTo, lineTo: path.impl.data[i + 1].point)
+      of CurveTo: PathSegment(kind: CurveTo, curveTo: (
+        path.impl.data[i + 1].point,
+        path.impl.data[i + 2].point,
+        path.impl.data[i + 3].point))
+      of ClosePath: PathSegment(kind: ClosePath)
+    i += path.impl.data[i].header.length
+    yield res

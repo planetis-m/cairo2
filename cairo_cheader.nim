@@ -65,8 +65,8 @@ type
     HintStyleFull
   HintMetrics* = enum
     HintMetricsDefault, HintMetricsOff, HintMetricsOn
-  PathDataType* = enum
-    PathMoveTo, PathLineTo, PathCurveTo, PathClosePath
+  PathSegmentKind* = enum
+    MoveTo, LineTo, CurveTo, ClosePath
   Content* = enum
     ContentColor = 0x00001000, ContentAlpha = 0x00002000,
     ContentColorAlpha = 0x00003000
@@ -130,9 +130,17 @@ type
     maxXAdvance* {.importc: "max_x_advance".}: float64
     maxYAdvance* {.importc: "max_y_advance".}: float64
 
-  TPathData* {.byref.} = object
+  Header = object
+    dataType {.importc: "type".}: PathSegmentKind
+    length: int32
+
+  Point* = object
     x*: float64
     y*: float64
+
+  TPathData {.byref, union.} = object
+    header: Header
+    point: Point
 
   TPath* = object
     status*: Status
