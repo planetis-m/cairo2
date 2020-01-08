@@ -299,10 +299,10 @@ proc inStroke*(cr: Context, x, y: float): bool =
 proc inFill*(cr: Context, x, y: float): bool =
   cairo_in_fill(cr.impl, x, y) == 1'i32
 # Rectangular extents
-proc strokeExtents*(cr: Context, x1, y1, x2, y2: var float) =
-  cairo_stroke_extents(cr.impl, x1, y1, x2, y2)
-proc fillExtents*(cr: Context, x1, y1, x2, y2: var float) =
-  cairo_fill_extents(cr.impl, x1, y1, x2, y2)
+proc strokeExtents*(cr: Context): tuple[x1, y1, x2, y2: float] =
+  cairo_stroke_extents(cr.impl, result.x1, result.y1, result.x2, result.y2)
+proc fillExtents*(cr: Context): tuple[x1, y1, x2, y2: float] =
+  cairo_fill_extents(cr.impl, result.x1, result.y1, result.x2, result.y2)
 # Clipping
 proc resetClip*(cr: Context) =
   cairo_reset_clip(cr.impl)
@@ -310,8 +310,8 @@ proc clip*(cr: Context) =
   cairo_clip(cr.impl)
 proc clipPreserve*(cr: Context) =
   cairo_clip_preserve(cr.impl)
-proc clipExtents*(cr: Context, x1, y1, x2, y2: var float) =
-  cairo_clip_extents(cr.impl, x1, y1, x2, y2)
+proc clipExtents*(cr: Context): tuple[x1, y1, x2, y2: float] =
+  cairo_clip_extents(cr.impl, result.x1, result.y1, result.x2, result.y2)
 proc copyClipRectangleList*(cr: Context): RectangleList =
   result = RectangleList(impl: cairo_copy_clip_rectangle_list(cr.impl))
 # Font/Text functions
@@ -416,8 +416,8 @@ proc getTolerance*(cr: Context): float =
   cairo_get_tolerance(cr.impl)
 proc getAntialias*(cr: Context): Antialias =
   cairo_get_antialias(cr.impl)
-proc getCurrentPoint*(cr: Context, x, y: var float) =
-  cairo_get_current_point(cr.impl, x, y)
+proc getCurrentPoint*(cr: Context): tuple[x, y: float] =
+  cairo_get_current_point(cr.impl, result.x, result.y)
 proc getFillRule*(cr: Context): FillRule =
   cairo_get_fill_rule(cr.impl)
 proc getLineWidth*(cr: Context): float =
@@ -473,8 +473,8 @@ proc markDirtyRectangle*(surface: Surface, x, y, width, height: int) =
   cairo_surface_mark_dirty_rectangle(surface.impl, x.int32, y.int32, width.int32, height.int32)
 proc setDeviceOffset*(surface: Surface, xOffset, yOffset: float) =
   cairo_surface_set_device_offset(surface.impl, xOffset, yOffset)
-proc getDeviceOffset*(surface: Surface, xOffset, yOffset: var float) =
-  cairo_surface_get_device_offset(surface.impl, xOffset, yOffset)
+proc getDeviceOffset*(surface: Surface): tuple[xOffset, yOffset: float] =
+  cairo_surface_get_device_offset(surface.impl, result.xOffset, result.yOffset)
 proc setFallbackResolution*(surface: Surface, xPixelsPerInch, yPixelsPerInch: float) =
   cairo_surface_set_fallback_resolution(surface.impl, xPixelsPerInch, yPixelsPerInch)
 # Image-surface functions
@@ -529,20 +529,20 @@ proc setFilter*(pattern: Pattern, filter: Filter) =
   cairo_pattern_set_filter(pattern.impl, filter)
 proc getFilter*(pattern: Pattern): Filter =
   cairo_pattern_get_filter(pattern.impl)
-proc getRgba*(pattern: Pattern, red, green, blue, alpha: var float) =
-  checkStatus cairo_pattern_get_rgba(pattern.impl, red, green, blue, alpha), [PatternTypeMismatch]
+proc getRgba*(pattern: Pattern): tuple[red, green, blue, alpha: float =
+  checkStatus cairo_pattern_get_rgba(pattern.impl, result.red, result.green, result.blue, result.alpha), [PatternTypeMismatch]
 proc getSurface*(pattern: Pattern, surface: Surface) =
   checkStatus cairo_pattern_get_surface(pattern.impl, surface.impl), [PatternTypeMismatch]
-proc getColorStopRgba*(pattern: Pattern, index: int, offset, red, green, blue, alpha: var float) =
-  checkStatus cairo_pattern_get_color_stop_rgba(pattern.impl, index.int32, offset, red, green, blue, alpha), [InvalidIndex, PatternTypeMismatch]
+proc getColorStopRgba*(pattern: Pattern, index: int): tuple[offset, red, green, blue, alpha: float] =
+  checkStatus cairo_pattern_get_color_stop_rgba(pattern.impl, index.int32, result.offset, result.red, result.green, result.blue, result.alpha), [InvalidIndex, PatternTypeMismatch]
 proc getColorStopCount*(pattern: Pattern): int =
   var count: int32
   checkStatus cairo_pattern_get_color_stop_count(pattern.impl, count), [PatternTypeMismatch]
   result = count
-proc getLinearPoints*(pattern: Pattern, x0, y0, x1, y1: var float) =
-  checkStatus cairo_pattern_get_linear_points(pattern.impl, x0, y0, x1, y1), [PatternTypeMismatch]
-proc getRadialCircles*(pattern: Pattern, x0, y0, r0, x1, y1, r1: var float) =
-  checkStatus cairo_pattern_get_radial_circles(pattern.impl, x0, y0, r0, x1, y1, r1), [PatternTypeMismatch]
+proc getLinearPoints*(pattern: Pattern): tuple[x0, y0, x1, y1: float] =
+  checkStatus cairo_pattern_get_linear_points(pattern.impl, result.x0, result.y0, result.x1, result.y1), [PatternTypeMismatch]
+proc getRadialCircles*(pattern: Pattern): tuple[x0, y0, r0, x1, y1, r1: float =
+  checkStatus cairo_pattern_get_radial_circles(pattern.impl, result.x0, result.y0, result.r0, result.x1, result.y1, result.r1), [PatternTypeMismatch]
 # Matrix functions
 proc initMatrix*(xx, yx, xy, yy, x0, y0: float): Matrix =
   cairo_matrix_init(result, xx, yx, xy, yy, x0, y0)
