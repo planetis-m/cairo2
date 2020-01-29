@@ -500,7 +500,7 @@ proc imageSurfaceCreate*(data: string; format: Format; width, height,
     stride: int): Surface =
   result = Surface(impl: cairo_image_surface_create_for_data(data, format,
       width.int32, height.int32, stride.int32))
-proc getData*(surface: Surface): string =
+proc getData*(surface: Surface): string = # this is wrong
   $cairo_image_surface_get_data(surface.impl)
 proc getFormat*(surface: Surface): Format =
   cairo_image_surface_get_format(surface.impl)
