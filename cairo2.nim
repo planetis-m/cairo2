@@ -114,7 +114,6 @@ type
 proc `=destroy`(cr: var Context) =
   if cr.impl != nil:
     cairo_destroy(cr.impl)
-    cr.impl = nil
 proc `=`(cr: var Context; original: Context) =
   if cr.impl != nil: cairo_destroy(cr.impl)
   cr.impl = cairo_reference(original.impl)
@@ -122,14 +121,12 @@ proc `=`(cr: var Context; original: Context) =
 proc `=destroy`(rectangleList: var RectangleList) =
   if rectangleList.impl != nil:
     cairo_rectangle_list_destroy(rectangleList.impl)
-    rectangleList.impl = nil
 # no copy rectanglelist function in cairo
 proc `=`(rectangleList: var RectangleList; original: RectangleList) {.error.}
 
 proc `=destroy`(options: var FontOptions) =
   if options.impl != nil:
     cairo_font_options_destroy(options.impl)
-    options.impl = nil
 proc `=`(options: var FontOptions; original: FontOptions) =
   if options.impl != original.impl:
     `=destroy`(options)
@@ -138,7 +135,6 @@ proc `=`(options: var FontOptions; original: FontOptions) =
 proc `=destroy`(fontFace: var FontFace) =
   if fontFace.impl != nil:
     cairo_font_face_destroy(fontFace.impl)
-    fontFace.impl = nil
 proc `=`(fontFace: var FontFace; original: FontFace) =
   if fontFace.impl != nil: cairo_font_face_destroy(fontFace.impl)
   fontFace.impl = cairo_font_face_reference(original.impl)
@@ -146,7 +142,6 @@ proc `=`(fontFace: var FontFace; original: FontFace) =
 proc `=destroy`(scaledFont: var ScaledFont) =
   if scaledFont.impl != nil:
     cairo_scaled_font_destroy(scaledFont.impl)
-    scaledFont.impl = nil
 proc `=`(scaledFont: var ScaledFont; original: ScaledFont) =
   if scaledFont.impl != nil: cairo_scaled_font_destroy(scaledFont.impl)
   scaledFont.impl = cairo_scaled_font_reference(original.impl)
@@ -154,13 +149,11 @@ proc `=`(scaledFont: var ScaledFont; original: ScaledFont) =
 proc `=destroy`(path: var Path) =
   if path.impl != nil:
     cairo_path_destroy(path.impl)
-    path.impl = nil
 proc `=`(path: var Path; original: Path) {.error.}
 
 proc `=destroy`(surface: var Surface) =
   if surface.impl != nil:
     cairo_surface_destroy(surface.impl)
-    surface.impl = nil
 proc `=`(surface: var Surface; original: Surface) =
   if surface.impl != nil: cairo_surface_destroy(surface.impl)
   surface.impl = cairo_surface_reference(original.impl)
@@ -168,7 +161,6 @@ proc `=`(surface: var Surface; original: Surface) =
 proc `=destroy`(pattern: var Pattern) =
   if pattern.impl != nil:
     cairo_pattern_destroy(pattern.impl)
-    pattern.impl = nil
 proc `=`(pattern: var Pattern; original: Pattern) =
   if pattern.impl != nil: cairo_pattern_destroy(pattern.impl)
   pattern.impl = cairo_pattern_reference(original.impl)
@@ -226,6 +218,7 @@ proc setLineJoin*(cr: Context; lineJoin: LineJoin) =
   cairo_set_line_join(cr.impl, lineJoin)
 proc setDash*(cr: Context; dashes: openarray[float]; offset: float) =
   cairo_set_dash(cr.impl, dashes, offset)
+  checkStatus cairo_status(cr.impl), [InvalidDash]
 proc setMiterLimit*(cr: Context; limit: float) =
   cairo_set_miter_limit(cr.impl, limit)
 proc translate*(cr: Context; tx, ty: float) =
